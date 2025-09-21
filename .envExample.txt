@@ -1,0 +1,8 @@
+--Las variables de entorno del archivo .env para la conexión con la BDD deberán seguir la siguiente estructura:
+
+
+PGHOST=localhost
+PGUSER=postgres
+PGPASSWORD=tu_contraseña
+PGDATABASE=mi_base
+PGPORT=5432
