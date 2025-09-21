@@ -87,7 +87,7 @@ CREATE TYPE gender_type AS ENUM (
 -- Información de los usuarios registrados.
 -- ================================================================
 CREATE TABLE users (
-    id_user             INTEGER PRIMARY KEY DEFAULT fun_increme_user, -- ID autoincremental.
+    id_user             SERIAL PRIMARY KEY, -- ID autoincremental.
     first_name          VARCHAR(100) NOT NULL, -- Nombre del usuario.
     last_name           VARCHAR(100) NOT NULL, -- Apellido del usuario.
     email               VARCHAR(150) UNIQUE NOT NULL 
@@ -103,7 +103,7 @@ CREATE TABLE users (
     target_lang_id      VARCHAR(2) NOT NULL,   -- Idioma objetivo (FK con languages).
     match_quantity      INTEGER NOT NULL,      -- Cantidad de matches.
     bank_id             VARCHAR(20),           -- Banco vinculado (FK con banks).
-    description         TEXT NOT NULL,                       DEFAULT 'NO APLICA'-- Descripción del usuario.
+    description         TEXT NOT NULL DEFAULT 'NO APLICA',                       -- Descripción del usuario.
     is_active           BOOLEAN NOT NULL DEFAULT TRUE,  -- Estado activo/inactivo.
     email_verified      BOOLEAN NOT NULL DEFAULT FALSE, -- Verificación de correo.
     last_login          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,             -- Última conexión.
