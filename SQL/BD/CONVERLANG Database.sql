@@ -105,6 +105,7 @@ CREATE TABLE users (
     target_lang_id      VARCHAR(2) NOT NULL,                 -- Código del idioma que el usuario desea aprender (clave foránea a languages).
     match_quantity      INTEGER NOT NULL DEFAULT 10,         -- Cantidad máxima de matches que el usuario desea recibir por día.
     bank_id             VARCHAR(20),                         -- Código del banco vinculado al usuario (clave foránea a banks).
+    role_code           VARCHAR(20),
     description         TEXT NOT NULL DEFAULT 'NO APLICA', -- Descripción o biografía del usuario.
     is_active           BOOLEAN NOT NULL DEFAULT TRUE,     -- Indica si el usuario está activo en la plataforma.
     email_verified      BOOLEAN NOT NULL DEFAULT FALSE,    -- Indica si el correo electrónico del usuario ha sido verificado.
@@ -114,23 +115,11 @@ CREATE TABLE users (
     CONSTRAINT fk_country      FOREIGN KEY (country_id)     REFERENCES countries(country_code), 
     CONSTRAINT fk_native_lang  FOREIGN KEY (native_lang_id) REFERENCES languages(language_code), 
     CONSTRAINT fk_target_lang  FOREIGN KEY (target_lang_id) REFERENCES languages(language_code),
-    CONSTRAINT fk_bank         FOREIGN KEY (bank_id)        REFERENCES banks(bank_code)
+    CONSTRAINT fk_bank         FOREIGN KEY (bank_id)        REFERENCES banks(bank_code),
+    CONSTRAINT fk_role_code     FOREIGN KEY (role_code)     REFERENCES user_roles(role_code)
 );
 
--- ================================================================
--- TABLA: user_role_assignments
--- Asigna roles a los usuarios para gestionar permisos y accesos.
--- ================================================================
-CREATE TABLE user_role_assignments (
-    user_id              INTEGER,       -- Identificador del usuario (clave foránea a users).
-    role_code            VARCHAR(20),   -- Código del rol asignado (clave foránea a user_roles).
-    assigned_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora en que se asignó el rol.
-    assigned_by          INTEGER,       -- Identificador del usuario que asignó el rol (clave foránea a users).
-    PRIMARY KEY (user_id, role_code),
-    CONSTRAINT fk_user         FOREIGN KEY (user_id)     REFERENCES users(id_user) ON DELETE CASCADE,
-    CONSTRAINT fk_role         FOREIGN KEY (role_code)   REFERENCES user_roles(role_code),
-    CONSTRAINT fk_assigned_by  FOREIGN KEY (assigned_by) REFERENCES users(id_user) ON DELETE SET NULL
-);
+
 
 -- ================================================================
 -- TABLA: teacher_profiles
@@ -209,15 +198,15 @@ CREATE TABLE user_likes (
 -- Registra los matches entre usuarios cuando ambos se han dado "like".
 -- ================================================================
 CREATE TABLE user_matches (
-    user_1              INTEGER,        -- Identificador del primer usuario en el match (clave foránea a users).
-    user_2              INTEGER,        -- Identificador del segundo usuario en el match (clave foránea a users).
+    match_id            SERIAL PRIMARY KEY,        -- Identificador único del match.
+    user_1              INTEGER NOT NULL,          -- Primer usuario.
+    user_2              INTEGER NOT NULL,          -- Segundo usuario.
     match_time          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_1, user_2),      -- Clave primaria compuesta para evitar duplicados de matches entre los mismos usuarios.
-    CONSTRAINT fk_user_1           FOREIGN KEY (user_1) REFERENCES users(id_user),
-    CONSTRAINT fk_user_2           FOREIGN KEY (user_2) REFERENCES users(id_user),
-    CONSTRAINT chk_different_users CHECK (user_1 < user_2)
+    CONSTRAINT fk_user_1 FOREIGN KEY (user_1) REFERENCES users(id_user),
+    CONSTRAINT fk_user_2 FOREIGN KEY (user_2) REFERENCES users(id_user),
+    CONSTRAINT chk_different_users CHECK (user_1 < user_2),
+    CONSTRAINT uq_user_pair UNIQUE (user_1, user_2)  -- Evita duplicados entre los mismos usuarios.
 );
-
 -- ================================================================
 -- TABLA: teaching_sessions
 -- Detalles específicos para sesiones de enseñanza pagadas entre teachers y estudiantes.
@@ -242,18 +231,19 @@ CREATE TABLE teaching_sessions (
 -- Almacena los mensajes intercambiados durante las sesiones entre usuarios.
 -- ================================================================
 CREATE TABLE chat_logs (
-    message_id          VARCHAR(50) PRIMARY KEY,  -- Identificador único del mensaje (ejemplo: 'MSG_20250728_001').
-    session_id          VARCHAR(50) NOT NULL,     -- Identificador de la sesión a la que pertenece el mensaje (clave foránea a sessions).
-    sender_id           INTEGER NOT NULL,         -- Identificador del usuario que envió el mensaje (clave foránea a users).
-    message             TEXT NOT NULL,            -- Contenido del mensaje.
-    timestamp           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora en que se envió el mensaje.
-    is_corrected        BOOLEAN DEFAULT FALSE,      -- Indica si el mensaje ha sido enviado correctamente.
-    reply_to            VARCHAR(50),                -- Identificador del mensaje al que se está respondiendo (clave foránea a chat_logs).
-    is_read             BOOLEAN DEFAULT FALSE,      -- Indica si el mensaje ha sido leído por el destinatario.
-    CONSTRAINT fk_session_chat FOREIGN KEY (session_id) REFERENCES sessions(session_id),
-    CONSTRAINT fk_sender       FOREIGN KEY (sender_id)  REFERENCES users(id_user),
-    CONSTRAINT fk_reply_to     FOREIGN KEY (reply_to)   REFERENCES chat_logs(message_id)
+    message_id          VARCHAR(50) PRIMARY KEY,
+    match_id            INTEGER NOT NULL,
+    sender_id           INTEGER NOT NULL,
+    message             TEXT NOT NULL,
+    timestamp           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_corrected        BOOLEAN DEFAULT FALSE,
+    reply_to            VARCHAR(50),
+    is_read             BOOLEAN DEFAULT FALSE,
+    CONSTRAINT fk_match_id  FOREIGN KEY (match_id)  REFERENCES user_matches(match_id),
+    CONSTRAINT fk_sender    FOREIGN KEY (sender_id) REFERENCES users(id_user),
+    CONSTRAINT fk_reply_to  FOREIGN KEY (reply_to)  REFERENCES chat_logs(message_id)
 );
+
 
 -- ================================================================
 -- TABLA: titles
@@ -366,10 +356,6 @@ CREATE INDEX idx_users_matching ON users(country_id, native_lang_id, target_lang
 CREATE INDEX idx_user_likes_giver_receiver ON user_likes(id_user_giver, id_user_receiver);  -- Búsqueda rápida de likes entre usuarios.
 CREATE INDEX idx_user_matches_users ON user_matches(user_1, user_2); -- Búsqueda rápida de matches entre usuarios.
 
--- 4. Sesiones y chat
-CREATE INDEX idx_sessions_users_status ON sessions(id_user1, id_user2, session_status); -- Búsqueda rápida de sesiones por usuarios y estado.
-CREATE INDEX idx_chat_logs_session_time ON chat_logs(session_id, timestamp);            -- Búsqueda rápida de mensajes por sesión y tiempo.
-CREATE INDEX idx_chat_logs_unread ON chat_logs(session_id, is_read) WHERE is_read = false;  -- Búsqueda rápida de mensajes no leídos por sesión.
 
 -- 5. Notificaciones
 CREATE INDEX idx_notifications ON notifications(user_id, is_read, created_at); -- Búsqueda rápida de notificaciones por usuario y estado de lectura.
@@ -458,89 +444,50 @@ ON CONFLICT (title_code) DO NOTHING;
 -- 40 usuarios distribuidos por América, con idiomas ES/EN/PT/FR
 -- NOTA: Se fija id_user explícito para referenciar en tablas hijas.
 INSERT INTO users
-(id_user, first_name, last_name, email, password_hash, gender, birth_date, country_id, profile_photo, native_lang_id, target_lang_id, match_quantity, bank_id, description, is_active, email_verified, last_login, created_at, updated_at)
+(id_user, first_name, last_name, email, password_hash, gender, birth_date, country_id, profile_photo, native_lang_id, target_lang_id, match_quantity, bank_id, role_code, description, is_active, email_verified, last_login, created_at, updated_at)
 VALUES
-(1,'Sofía','Ramírez','sofia.mx@example.com','h1','femenino','1994-05-12','MX',NULL,'ES','EN',10,'BBVAMX','Amante de los idiomas',TRUE,TRUE,NOW(),NOW(),NOW()),
-(2,'Lucas','Pereira','lucas.br@example.com','h2','masculino','1990-02-20','BR',NULL,'PT','EN',8,'BRADBR','De São Paulo',TRUE,TRUE,NOW(),NOW(),NOW()),
-(3,'Camila','Gómez','camila.co@example.com','h3','femenino','1998-11-08','CO',NULL,'ES','FR',6,'BANCOLCO','Colombiana aprendiendo francés',TRUE,FALSE,NOW(),NOW(),NOW()),
-(4,'John','Smith','john.us@example.com','h4','masculino','1987-07-03','US',NULL,'EN','ES',12,'CHASEUS','Viajero frecuente',TRUE,TRUE,NOW(),NOW(),NOW()),
-(5,'Marie','Dupont','marie.fr@example.com','h5','femenino','1992-03-30','CA',NULL,'FR','EN',7,'SCOTIACA','Francófona en Canadá',TRUE,TRUE,NOW(),NOW(),NOW()),
-(6,'Ana','Fernández','ana.ar@example.com','h6','femenino','1995-09-15','AR',NULL,'ES','EN',9,'ITAUAR','Docente argentina',TRUE,TRUE,NOW(),NOW(),NOW()),
-(7,'Pedro','Silva','pedro.br@example.com','h7','masculino','1985-12-01','BR',NULL,'PT','ES',5,'IT AUBR','Amante del fútbol',TRUE,FALSE,NOW(),NOW(),NOW()),
-(8,'Valentina','Ríos','valentina.cl@example.com','h8','femenino','1999-06-21','CL',NULL,'ES','EN',6,'SANTCL','Chilena curiosa',TRUE,TRUE,NOW(),NOW(),NOW()),
-(9,'Andrés','Quispe','andres.pe@example.com','h9','masculino','1993-01-10','PE',NULL,'ES','EN',10,'BCPPE','Cusqueño',TRUE,TRUE,NOW(),NOW(),NOW()),
-(10,'Daniela','Torres','daniela.co@example.com','h10','femenino','2000-04-25','CO',NULL,'ES','FR',7,'DAVIVACO','Bogotá, música y arte',TRUE,FALSE,NOW(),NOW(),NOW()),
-(11,'José','García','jose.mx@example.com','h11','masculino','1991-08-18','MX',NULL,'ES','EN',6,'BANAMXMX','CDMX',TRUE,TRUE,NOW(),NOW(),NOW()),
-(12,'Laura','Mendoza','laura.uy@example.com','h12','femenino','1996-02-14','UY',NULL,'ES','PT',8,'BROUUY','Uruguaya',TRUE,TRUE,NOW(),NOW(),NOW()),
-(13,'Thiago','Costa','thiago.br@example.com','h13','masculino','1997-07-07','BR',NULL,'PT','ES',5,NULL,'Belo Horizonte',TRUE,FALSE,NOW(),NOW(),NOW()),
-(14,'Carla','Morales','carla.cl@example.com','h14','femenino','1989-10-02','CL',NULL,'ES','EN',9,'SANTCL','Valparaíso',TRUE,TRUE,NOW(),NOW(),NOW()),
-(15,'Gabriel','Rodríguez','gabriel.co@example.com','h15','masculino','1994-12-12','CO',NULL,'ES','EN',7,'BANCOLCO','Medellín',TRUE,TRUE,NOW(),NOW(),NOW()),
-(16,'Emily','Johnson','emily.us@example.com','h16','femenino','1993-03-03','US',NULL,'EN','ES',8,'BOFAUS','NYC',TRUE,TRUE,NOW(),NOW(),NOW()),
-(17,'Carlos','López','carlos.gt@example.com','h17','masculino','1992-09-09','GT',NULL,'ES','EN',6,NULL,'Guatemala City',TRUE,FALSE,NOW(),NOW(),NOW()),
-(18,'Rosa','Mejía','rosa.sv@example.com','h18','femenino','1990-11-11','SV',NULL,'ES','EN',5,NULL,'San Salvador',TRUE,TRUE,NOW(),NOW(),NOW()),
-(19,'Miguel','Hernández','miguel.hn@example.com','h19','masculino','1998-05-05','HN',NULL,'ES','EN',7,NULL,'Tegucigalpa',TRUE,TRUE,NOW(),NOW(),NOW()),
-(20,'Lucía','Castro','lucia.ni@example.com','h20','femenino','1997-06-06','NI',NULL,'ES','EN',6,NULL,'Managua',TRUE,FALSE,NOW(),NOW(),NOW()),
-(21,'Adrián','Solís','adrian.cr@example.com','h21','masculino','1991-01-21','CR',NULL,'ES','EN',8,'BCRCR','San José',TRUE,TRUE,NOW(),NOW(),NOW()),
-(22,'Paula','Rojas','paula.pa@example.com','h22','femenino','1995-02-22','PA',NULL,'ES','EN',7,'BACCR','Ciudad de Panamá',TRUE,TRUE,NOW(),NOW(),NOW()),
-(23,'Belén','Martínez','belen.bz@example.com','h23','femenino','1996-03-23','BZ',NULL,'ES','EN',6,NULL,'Belize City',TRUE,FALSE,NOW(),NOW(),NOW()),
-(24,'Diego','Vera','diego.ve@example.com','h24','masculino','1988-04-24','VE',NULL,'ES','FR',9,NULL,'Caracas',TRUE,TRUE,NOW(),NOW(),NOW()),
-(25,'Elena','Suárez','elena.ec@example.com','h25','femenino','1999-05-25','EC',NULL,'ES','EN',7,'PICHINEC','Quito',TRUE,TRUE,NOW(),NOW(),NOW()),
-(26,'Hugo','Flores','hugo.pr@example.com','h26','masculino','1987-06-26','PR',NULL,'ES','EN',6,NULL,'San Juan',TRUE,TRUE,NOW(),NOW(),NOW()),
-(27,'Renata','Almeida','renata.br@example.com','h27','femenino','1995-07-27','BR',NULL,'PT','ES',8,'BRADBR','Recife',TRUE,FALSE,NOW(),NOW(),NOW()),
-(28,'Nicolás','Paz','nicolas.ar@example.com','h28','masculino','1996-08-28','AR',NULL,'ES','EN',10,'ITAUAR','Rosario',TRUE,TRUE,NOW(),NOW(),NOW()),
-(29,'Patricia','Guzmán','patricia.cl@example.com','h29','femenino','1994-09-29','CL',NULL,'ES','FR',6,'SANTCL','Santiago',TRUE,TRUE,NOW(),NOW(),NOW()),
-(30,'Eric','Brown','eric.us@example.com','h30','masculino','1993-10-30','US',NULL,'EN','ES',7,'CHASEUS','Miami',TRUE,TRUE,NOW(),NOW(),NOW()),
-(31,'Santiago','Fuentes','santiago.co@example.com','h31','masculino','1997-01-15','CO',NULL,'ES','EN',6,'DAVIVACO','Cali',TRUE,TRUE,NOW(),NOW(),NOW()),
-(32,'Marta','Álvarez','marta.mx@example.com','h32','femenino','1998-02-16','MX',NULL,'ES','EN',5,'BBVAMX','Guadalajara',TRUE,FALSE,NOW(),NOW(),NOW()),
-(33,'Bruno','Cardoso','bruno.br@example.com','h33','masculino','1992-03-17','BR',NULL,'PT','EN',6,NULL,'Porto Alegre',TRUE,TRUE,NOW(),NOW(),NOW()),
-(34,'Paige','Miller','paige.ca@example.com','h34','femenino','1991-04-18','CA',NULL,'EN','FR',8,'SCOTIACA','Toronto',TRUE,TRUE,NOW(),NOW(),NOW()),
-(35,'Clara','Núñez','clara.uy@example.com','h35','femenino','1990-05-19','UY',NULL,'ES','PT',7,'BROUUY','Montevideo',TRUE,TRUE,NOW(),NOW(),NOW()),
-(36,'Juan','Guevara','juan.pe@example.com','h36','masculino','1999-06-20','PE',NULL,'ES','EN',6,'BCPPE','Lima',TRUE,FALSE,NOW(),NOW(),NOW()),
-(37,'Teresa','Vega','teresa.ec@example.com','h37','femenino','1986-07-21','EC',NULL,'ES','FR',7,'PICHINEC','Guayaquil',TRUE,TRUE,NOW(),NOW(),NOW()),
-(38,'Marco','Díaz','marco.do@example.com','h38','masculino','1995-08-22','DO',NULL,'ES','EN',5,'BPDOD','Santo Domingo',TRUE,TRUE,NOW(),NOW(),NOW()),
-(39,'Alicia','Reyes','alicia.cr@example.com','h39','femenino','1994-09-23','CR',NULL,'ES','EN',6,'BACCR','Heredia',TRUE,TRUE,NOW(),NOW(),NOW()),
-(40,'Hélène','Moreau','helene.ca@example.com','h40','femenino','1992-10-24','CA',NULL,'FR','EN',8,'SCOTIACA','Montreal',TRUE,TRUE,NOW(),NOW(),NOW());
+(1,'Sofía','Ramírez','sofia.mx@example.com','h1','femenino','1994-05-12','MX',NULL,'ES','EN',10,'BBVAMX','admin','Amante de los idiomas',TRUE,TRUE,NOW(),NOW(),NOW()),
+(2,'Lucas','Pereira','lucas.br@example.com','h2','masculino','1990-02-20','BR',NULL,'PT','EN',8,'BRADBR','teacher','De São Paulo',TRUE,TRUE,NOW(),NOW(),NOW()),
+(3,'Camila','Gómez','camila.co@example.com','h3','femenino','1998-11-08','CO',NULL,'ES','FR',6,'BANCOLCO','user','Colombiana aprendiendo francés',TRUE,FALSE,NOW(),NOW(),NOW()),
+(4,'John','Smith','john.us@example.com','h4','masculino','1987-07-03','US',NULL,'EN','ES',12,'CHASEUS','teacher','Viajero frecuente',TRUE,TRUE,NOW(),NOW(),NOW()),
+(5,'Marie','Dupont','marie.fr@example.com','h5','femenino','1992-03-30','CA',NULL,'FR','EN',7,'SCOTIACA','user','Francófona en Canadá',TRUE,TRUE,NOW(),NOW(),NOW()),
+(6,'Ana','Fernández','ana.ar@example.com','h6','femenino','1995-09-15','AR',NULL,'ES','EN',9,'ITAUAR','teacher','Docente argentina',TRUE,TRUE,NOW(),NOW(),NOW()),
+(7,'Pedro','Silva','pedro.br@example.com','h7','masculino','1985-12-01','BR',NULL,'PT','ES',5,'IT AUBR','user','Amante del fútbol',TRUE,FALSE,NOW(),NOW(),NOW()),
+(8,'Valentina','Ríos','valentina.cl@example.com','h8','femenino','1999-06-21','CL',NULL,'ES','EN',6,'SANTCL','user','Chilena curiosa',TRUE,TRUE,NOW(),NOW(),NOW()),
+(9,'Andrés','Quispe','andres.pe@example.com','h9','masculino','1993-01-10','PE',NULL,'ES','EN',10,'BCPPE','user','Cusqueño',TRUE,TRUE,NOW(),NOW(),NOW()),
+(10,'Daniela','Torres','daniela.co@example.com','h10','femenino','2000-04-25','CO',NULL,'ES','FR',7,'DAVIVACO','user','Bogotá, música y arte',TRUE,FALSE,NOW(),NOW(),NOW()),
+(11,'José','García','jose.mx@example.com','h11','masculino','1991-08-18','MX',NULL,'ES','EN',6,'BANAMXMX','user','CDMX',TRUE,TRUE,NOW(),NOW(),NOW()),
+(12,'Laura','Mendoza','laura.uy@example.com','h12','femenino','1996-02-14','UY',NULL,'ES','PT',8,'BROUUY','teacher','Uruguaya',TRUE,TRUE,NOW(),NOW(),NOW()),
+(13,'Thiago','Costa','thiago.br@example.com','h13','masculino','1997-07-07','BR',NULL,'PT','ES',5,NULL,'user','Belo Horizonte',TRUE,FALSE,NOW(),NOW(),NOW()),
+(14,'Carla','Morales','carla.cl@example.com','h14','femenino','1989-10-02','CL',NULL,'ES','EN',9,'SANTCL','teacher','Valparaíso',TRUE,TRUE,NOW(),NOW(),NOW()),
+(15,'Gabriel','Rodríguez','gabriel.co@example.com','h15','masculino','1994-12-12','CO',NULL,'ES','EN',7,'BANCOLCO','user','Medellín',TRUE,TRUE,NOW(),NOW(),NOW()),
+(16,'Emily','Johnson','emily.us@example.com','h16','femenino','1993-03-03','US',NULL,'EN','ES',8,'BOFAUS','user','NYC',TRUE,TRUE,NOW(),NOW(),NOW()),
+(17,'Carlos','López','carlos.gt@example.com','h17','masculino','1992-09-09','GT',NULL,'ES','EN',6,NULL,'user','Guatemala City',TRUE,FALSE,NOW(),NOW(),NOW()),
+(18,'Rosa','Mejía','rosa.sv@example.com','h18','femenino','1990-11-11','SV',NULL,'ES','EN',5,NULL,'teacher','San Salvador',TRUE,TRUE,NOW(),NOW(),NOW()),
+(19,'Miguel','Hernández','miguel.hn@example.com','h19','masculino','1998-05-05','HN',NULL,'ES','EN',7,NULL,'user','Tegucigalpa',TRUE,TRUE,NOW(),NOW(),NOW()),
+(20,'Lucía','Castro','lucia.ni@example.com','h20','femenino','1997-06-06','NI',NULL,'ES','EN',6,NULL,'teacher','Managua',TRUE,FALSE,NOW(),NOW(),NOW()),
+(21,'Adrián','Solís','adrian.cr@example.com','h21','masculino','1991-01-21','CR',NULL,'ES','EN',8,'BCRCR','user','San José',TRUE,TRUE,NOW(),NOW(),NOW()),
+(22,'Paula','Rojas','paula.pa@example.com','h22','femenino','1995-02-22','PA',NULL,'ES','EN',7,'BACCR','user','Ciudad de Panamá',TRUE,TRUE,NOW(),NOW(),NOW()),
+(23,'Belén','Martínez','belen.bz@example.com','h23','femenino','1996-03-23','BZ',NULL,'ES','EN',6,NULL,'user','Belize City',TRUE,FALSE,NOW(),NOW(),NOW()),
+(24,'Diego','Vera','diego.ve@example.com','h24','masculino','1988-04-24','VE',NULL,'ES','FR',9,NULL,'user','Caracas',TRUE,TRUE,NOW(),NOW(),NOW()),
+(25,'Elena','Suárez','elena.ec@example.com','h25','femenino','1999-05-25','EC',NULL,'ES','EN',7,'PICHINEC','user','Quito',TRUE,TRUE,NOW(),NOW(),NOW()),
+(26,'Hugo','Flores','hugo.pr@example.com','h26','masculino','1987-06-26','PR',NULL,'ES','EN',6,NULL,'user','San Juan',TRUE,TRUE,NOW(),NOW(),NOW()),
+(27,'Renata','Almeida','renata.br@example.com','h27','femenino','1995-07-27','BR',NULL,'PT','ES',8,'BRADBR','teacher','Recife',TRUE,FALSE,NOW(),NOW(),NOW()),
+(28,'Nicolás','Paz','nicolas.ar@example.com','h28','masculino','1996-08-28','AR',NULL,'ES','EN',10,'ITAUAR','user','Rosario',TRUE,TRUE,NOW(),NOW(),NOW()),
+(29,'Patricia','Guzmán','patricia.cl@example.com','h29','femenino','1994-09-29','CL',NULL,'ES','FR',6,'SANTCL','teacher','Santiago',TRUE,TRUE,NOW(),NOW(),NOW()),
+(30,'Eric','Brown','eric.us@example.com','h30','masculino','1993-10-30','US',NULL,'EN','ES',7,'CHASEUS','user','Miami',TRUE,TRUE,NOW(),NOW(),NOW()),
+(31,'Santiago','Fuentes','santiago.co@example.com','h31','masculino','1997-01-15','CO',NULL,'ES','EN',6,'DAVIVACO','user','Cali',TRUE,TRUE,NOW(),NOW(),NOW()),
+(32,'Marta','Álvarez','marta.mx@example.com','h32','femenino','1998-02-16','MX',NULL,'ES','EN',5,'BBVAMX','user','Guadalajara',TRUE,FALSE,NOW(),NOW(),NOW()),
+(33,'Bruno','Cardoso','bruno.br@example.com','h33','masculino','1992-03-17','BR',NULL,'PT','EN',6,NULL,'user','Porto Alegre',TRUE,TRUE,NOW(),NOW(),NOW()),
+(34,'Paige','Miller','paige.ca@example.com','h34','femenino','1991-04-18','CA',NULL,'EN','FR',8,'SCOTIACA','teacher','Toronto',TRUE,TRUE,NOW(),NOW(),NOW()),
+(35,'Clara','Núñez','clara.uy@example.com','h35','femenino','1990-05-19','UY',NULL,'ES','PT',7,'BROUUY','user','Montevideo',TRUE,TRUE,NOW(),NOW(),NOW()),
+(36,'Juan','Guevara','juan.pe@example.com','h36','masculino','1999-06-20','PE',NULL,'ES','EN',6,'BCPPE','user','Lima',TRUE,FALSE,NOW(),NOW(),NOW()),
+(37,'Teresa','Vega','teresa.ec@example.com','h37','femenino','1986-07-21','EC',NULL,'ES','FR',7,'PICHINEC','user','Guayaquil',TRUE,TRUE,NOW(),NOW(),NOW()),
+(38,'Marco','Díaz','marco.do@example.com','h38','masculino','1995-08-22','DO',NULL,'ES','EN',5,'BPDOD','user','Santo Domingo',TRUE,TRUE,NOW(),NOW(),NOW()),
+(39,'Alicia','Reyes','alicia.cr@example.com','h39','femenino','1994-09-23','CR',NULL,'ES','EN',6,'BACCR','user','Heredia',TRUE,TRUE,NOW(),NOW(),NOW()),
+(40,'Hélène','Moreau','helene.ca@example.com','h40','femenino','1992-10-24','CA',NULL,'FR','EN',8,'SCOTIACA','teacher','Montreal',TRUE,TRUE,NOW(),NOW(),NOW());
 
--- 7) USER ROLE ASSIGNMENTS ---------------------------------------
--- admin para #1, teachers varios
-INSERT INTO user_role_assignments (user_id, role_code, assigned_at, assigned_by) VALUES
-(1,'admin',NOW(),NULL),
-(1,'user',NOW(),NULL),
-(2,'teacher',NOW(),1),(2,'user',NOW(),1),
-(4,'teacher',NOW(),1),(4,'user',NOW(),1),
-(5,'user',NOW(),1),
-(6,'teacher',NOW(),1),(6,'user',NOW(),1),
-(7,'user',NOW(),1),
-(8,'user',NOW(),1),
-(9,'user',NOW(),1),
-(10,'user',NOW(),1),
-(11,'user',NOW(),1),
-(12,'teacher',NOW(),1),(12,'user',NOW(),1),
-(13,'user',NOW(),1),
-(14,'teacher',NOW(),1),(14,'user',NOW(),1),
-(15,'user',NOW(),1),
-(16,'user',NOW(),1),
-(18,'teacher',NOW(),1),(18,'user',NOW(),1),
-(20,'teacher',NOW(),1),(20,'user',NOW(),1),
-(21,'user',NOW(),1),
-(22,'user',NOW(),1),
-(24,'user',NOW(),1),
-(25,'user',NOW(),1),
-(26,'user',NOW(),1),
-(27,'teacher',NOW(),1),(27,'user',NOW(),1),
-(28,'user',NOW(),1),
-(29,'teacher',NOW(),1),(29,'user',NOW(),1),
-(30,'user',NOW(),1),
-(31,'user',NOW(),1),
-(32,'user',NOW(),1),
-(33,'user',NOW(),1),
-(34,'teacher',NOW(),1),(34,'user',NOW(),1),
-(35,'user',NOW(),1),
-(36,'user',NOW(),1),
-(37,'user',NOW(),1),
-(38,'user',NOW(),1),
-(39,'user',NOW(),1),
-(40,'teacher',NOW(),1),(40,'user',NOW(),1);
+
 
 -- 8) TEACHER PROFILES --------------------------------------------
 INSERT INTO teacher_profiles
@@ -601,13 +548,6 @@ INSERT INTO user_matches (user_1, user_2, match_time) VALUES
 INSERT INTO teaching_sessions (session_id, teacher_profile_id, student_id, session_cost, teacher_notes, student_rating, teacher_rating, homework_assigned, homework_completed) VALUES
 ('SES_20250805_001', 4, 5, 30.00, 'Pronunciación de /th/ y entonación', 5, 5, 'Grabar 3 lecturas cortas', TRUE),
 ('SES_20250820_001', 6, 36, 18.00, 'Preparación de entrevista laboral', NULL, NULL, 'Practicar preguntas frecuentes', FALSE);
-
--- 14) CHAT_LOGS ---------------------------------------------------
-INSERT INTO chat_logs (message_id, session_id, sender_id, message, timestamp, is_corrected, reply_to, is_read) VALUES
-('MSG_20250801_001','SES_20250801_001',3,'Bonjour, John!', '2025-08-01 14:55:00',FALSE,NULL,TRUE),
-('MSG_20250801_002','SES_20250801_001',4,'Salut Camila, prêt·e?', '2025-08-01 14:56:00',FALSE,'MSG_20250801_001',TRUE),
-('MSG_20250805_001','SES_20250805_001',5,'Ready to start?', '2025-08-05 17:55:00',FALSE,NULL,TRUE),
-('MSG_20250805_002','SES_20250805_001',4,'Let''s go!', '2025-08-05 17:56:00',FALSE,'MSG_20250805_001',TRUE);
 
 -- 15) USER_TITLES -------------------------------------------------
 INSERT INTO user_titles (id_user, title_code, earned_at) VALUES
