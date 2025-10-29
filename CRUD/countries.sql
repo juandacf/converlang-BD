@@ -197,18 +197,18 @@ BEGIN
     ELSIF LENGTH(p_country_code) < 2 OR LENGTH(p_country_code) > 5 THEN
         RAISE EXCEPTION 'El código del país debe tener entre 2 y 5 caracteres.';
     END IF;
-
+    
     -- Retornar el país correspondiente
     RETURN QUERY
     SELECT 
-        country_code,
-        country_name,
-        timezone,
-        created_at,
-        updated_at
-    FROM countries
-    WHERE country_code = p_country_code;
-
+        c.country_code,
+        c.country_name,
+        c.timezone,
+        c.created_at,
+        c.updated_at
+    FROM countries c
+    WHERE c.country_code = p_country_code; 
+    
     -- Si no se encontró ningún registro
     IF NOT FOUND THEN
         RAISE EXCEPTION 'No se encontró ningún país con el código %.', p_country_code;
