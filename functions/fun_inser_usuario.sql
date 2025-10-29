@@ -11,8 +11,8 @@ CREATE OR REPLACE FUNCTION fun_insert_usuarios(
                                                 wfirst_name users.first_name%TYPE,
                                                 wlast_name users.last_name%TYPE,
                                                 wemail users.email%TYPE,
-                                                wpassword users.password_hash%TYPE,
-                                                wgender users.gender%TYPE,
+                                                wpassword_hash users.password_hash%TYPE,
+                                                wgender_id users.gender_id%TYPE,
                                                 wbirth_date users.birth_date%TYPE,
                                                 wcountry_id users.country_id%TYPE,
                                                 wprofile_photo users.profile_photo%TYPE,
@@ -115,17 +115,14 @@ BEGIN
     -- Si todas las validaciones pasan, insertar usuario
     BEGIN
         INSERT INTO users (
-            first_name, last_name, email, password_hash, gender, 
+            first_name, last_name, email, password_hash, gender_id, 
             birth_date, country_id, profile_photo, native_lang_id, 
             target_lang_id, match_quantity, bank_id, description
         ) VALUES (
-            wfirst_name, wlast_name, wemail, wpassword, wgender,
+            wfirst_name, wlast_name, wemail, wpassword_hash, wgender_id,
             wbirth_date, wcountry_id, wprofile_photo, wnative_lang_id,
             wtarget_lang_id, wmatch_quantity, wbank_id, wdescription
         ) RETURNING id_user INTO wnew_user_id;
-        
-        INSERT INTO user_role_assignments (user_id, role_code) 
-        VALUES (wnew_user_id, 'user');
         
 -- Mensaje de depuración para informar estado o error detectado.
         RAISE NOTICE 'Usuario creado exitosamente con ID: %', wnew_user_id;
