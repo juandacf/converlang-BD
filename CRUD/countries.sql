@@ -165,9 +165,7 @@ BEGIN
     SELECT 
         country_code,
         country_name,
-        timezone,
-        created_at,
-        updated_at
+        timezone
     FROM countries
     ORDER BY country_name ASC;
 END;
