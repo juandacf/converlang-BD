@@ -163,13 +163,16 @@ $$
 BEGIN
     RETURN QUERY
     SELECT 
-        country_code,
-        country_name,
-        timezone
-    FROM countries
-    ORDER BY country_name ASC;
+        c.country_code,
+        c.country_name,
+        c.timezone,
+        c.created_at,
+        c.updated_at
+    FROM countries c
+    ORDER BY c.country_name ASC;
 END;
 $$ LANGUAGE plpgsql;
+
 
 --Se debe usar así:
 -- SELECT * FROM get_all_countries();
