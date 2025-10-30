@@ -15,32 +15,32 @@ BEGIN
     -- VALIDACIÓN Y NORMALIZACIÓN DEL CÓDIGO DEL PAÍS
     -- ============================
     IF p_country_code IS NULL OR LENGTH(TRIM(p_country_code)) = 0 THEN
-        RAISE EXCEPTION 'El código del país no puede estar vacío.';
+        RETURN 'El código del país no puede estar vacío.';
     ELSIF LENGTH(p_country_code) < 2 OR LENGTH(p_country_code) > 5 THEN
-        RAISE EXCEPTION 'El código del país debe tener entre 2 y 5 caracteres.';
+        RETURN 'El código del país debe tener entre 2 y 5 caracteres.';
     END IF;
     
     -- Convertir country_code a mayúsculas
     v_country_code_upper := UPPER(p_country_code);
     
     IF v_country_code_upper !~ '^[A-Z]+$' THEN
-        RAISE EXCEPTION 'El código de país debe contener solo letras.';
+        RETURN 'El código de país debe contener solo letras.';
     END IF;
     
     -- ============================
     -- VALIDACIÓN DEL NOMBRE DEL PAÍS
     -- ============================
     IF p_country_name IS NULL OR LENGTH(TRIM(p_country_name)) = 0 THEN
-        RAISE EXCEPTION 'El nombre del país no puede estar vacío.';
+        RETURN 'El nombre del país no puede estar vacío.';
     ELSIF LENGTH(p_country_name) > 50 THEN
-        RAISE EXCEPTION 'El nombre del país no puede tener más de 50 caracteres.';
+        RETURN 'El nombre del país no puede tener más de 50 caracteres.';
     END IF;
     
     -- ============================
     -- VALIDACIÓN DE ZONA HORARIA (si se proporciona)
     -- ============================
     IF p_timezone IS NOT NULL AND LENGTH(p_timezone) > 50 THEN
-        RAISE EXCEPTION 'La zona horaria no puede tener más de 50 caracteres.';
+        RETURN 'La zona horaria no puede tener más de 50 caracteres.';
     END IF;
     
     -- ============================
@@ -52,7 +52,7 @@ BEGIN
     ) INTO v_exists;
     
     IF v_exists THEN
-        RAISE EXCEPTION 'Ya existe un país con el mismo código o nombre.';
+        RETURN 'Ya existe un país con el mismo código o nombre.';
     END IF;
     
     -- ============================
