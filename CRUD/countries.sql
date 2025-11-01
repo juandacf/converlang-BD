@@ -61,84 +61,66 @@ $$ LANGUAGE plpgsql;
 
 
 
---Editar países
 CREATE OR REPLACE FUNCTION update_country(
     p_country_code VARCHAR,
     p_country_name VARCHAR,
     p_timezone VARCHAR DEFAULT NULL
 )
-RETURNS TEXT AS
+RETURNS TABLE (
+    country_code VARCHAR,
+    country_name VARCHAR,
+    timezone VARCHAR,
+    updated_at TIMESTAMP
+)
+AS
 $$
 DECLARE
     v_exists BOOLEAN;
     v_country_code_upper VARCHAR;
 BEGIN
-    -- ============================
-    -- VALIDACIÓN Y NORMALIZACIÓN DEL CÓDIGO DEL PAÍS
-    -- ============================
     IF p_country_code IS NULL OR LENGTH(TRIM(p_country_code)) = 0 THEN
         RAISE EXCEPTION 'El código del país no puede estar vacío.';
     ELSIF LENGTH(p_country_code) < 2 OR LENGTH(p_country_code) > 5 THEN
         RAISE EXCEPTION 'El código del país debe tener entre 2 y 5 caracteres.';
     END IF;
     
-    -- Convertir country_code a mayúsculas
     v_country_code_upper := UPPER(p_country_code);
-    
-    -- ============================
-    -- VERIFICAR EXISTENCIA DEL PAÍS
-    -- ============================
-    SELECT EXISTS(SELECT 1 FROM countries WHERE country_code = v_country_code_upper)
+
+    SELECT EXISTS(SELECT 1 FROM countries c WHERE c.country_code = v_country_code_upper)
     INTO v_exists;
     
     IF NOT v_exists THEN
         RAISE EXCEPTION 'No existe ningún país con el código %.', v_country_code_upper;
     END IF;
     
-    -- ============================
-    -- VALIDACIÓN DEL NOMBRE DEL PAÍS
-    -- ============================
     IF p_country_name IS NULL OR LENGTH(TRIM(p_country_name)) = 0 THEN
         RAISE EXCEPTION 'El nombre del país no puede estar vacío.';
     ELSIF LENGTH(p_country_name) > 50 THEN
         RAISE EXCEPTION 'El nombre del país no puede tener más de 50 caracteres.';
     END IF;
     
-    -- ============================
-    -- VALIDAR QUE EL NUEVO NOMBRE NO ESTÉ REPETIDO EN OTRO PAÍS
-    -- ============================
     SELECT EXISTS(
-        SELECT 1 FROM countries
-        WHERE UPPER(country_name) = UPPER(p_country_name)
-        AND country_code <> v_country_code_upper
+        SELECT 1 FROM countries c
+        WHERE UPPER(c.country_name) = UPPER(p_country_name)
+          AND c.country_code <> v_country_code_upper
     ) INTO v_exists;
     
     IF v_exists THEN
         RAISE EXCEPTION 'Ya existe otro país con el nombre %.', p_country_name;
     END IF;
     
-    -- ============================
-    -- VALIDACIÓN DE ZONA HORARIA
-    -- ============================
     IF p_timezone IS NOT NULL AND LENGTH(p_timezone) > 50 THEN
         RAISE EXCEPTION 'La zona horaria no puede tener más de 50 caracteres.';
     END IF;
     
-    -- ============================
-    -- ACTUALIZAR PAÍS
-    -- ============================
-    UPDATE countries
+ RETURN QUERY
+    UPDATE countries AS c
     SET
         country_name = p_country_name,
         timezone = p_timezone,
         updated_at = CURRENT_TIMESTAMP
-    WHERE country_code = v_country_code_upper;
-    
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'No se pudo actualizar el país con código %.', v_country_code_upper;
-    END IF;
-    
-    RETURN format('País %s (%s) actualizado correctamente.', p_country_name, v_country_code_upper);
+    WHERE c.country_code = v_country_code_upper
+    RETURNING c.country_code, c.country_name, c.timezone, c.updated_at;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -219,27 +201,46 @@ RETURNS TEXT AS
 $$
 DECLARE
     v_exists BOOLEAN;
+    v_country_code_upper VARCHAR;
 BEGIN
-    -- Validar código del país
+    -- ============================
+    -- VALIDACIÓN Y NORMALIZACIÓN DEL CÓDIGO DEL PAÍS
+    -- ============================
     IF p_country_code IS NULL OR LENGTH(TRIM(p_country_code)) = 0 THEN
         RAISE EXCEPTION 'El código del país no puede estar vacío.';
     ELSIF LENGTH(p_country_code) < 2 OR LENGTH(p_country_code) > 5 THEN
         RAISE EXCEPTION 'El código del país debe tener entre 2 y 5 caracteres.';
     END IF;
 
-    -- Verificar si el país existe
+    -- Normalizar a mayúsculas
+    v_country_code_upper := UPPER(TRIM(p_country_code));
+
+    -- ============================
+    -- VERIFICAR EXISTENCIA DEL PAÍS
+    -- ============================
     SELECT EXISTS (
-        SELECT 1 FROM countries WHERE country_code = p_country_code
-    ) INTO v_exists;
+        SELECT 1 FROM countries WHERE country_code = v_country_code_upper
+    )
+    INTO v_exists;
 
     IF NOT v_exists THEN
-        RAISE EXCEPTION 'No existe ningún país con el código %.', p_country_code;
+        RAISE EXCEPTION 'No existe ningún país con el código %.', v_country_code_upper;
     END IF;
 
-    -- Eliminar país
-    DELETE FROM countries WHERE country_code = p_country_code;
+    -- ============================
+    -- ELIMINAR PAÍS
+    -- ============================
+    DELETE FROM countries
+    WHERE country_code = v_country_code_upper;
 
-    RETURN format('El país con código %s fue eliminado correctamente.', p_country_code);
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No se pudo eliminar el país con código %.', v_country_code_upper;
+    END IF;
+
+    -- ============================
+    -- RESPUESTA
+    -- ============================
+    RETURN format('El país con código %s fue eliminado correctamente.', v_country_code_upper);
 END;
 $$ LANGUAGE plpgsql;
 
