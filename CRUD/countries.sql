@@ -1,69 +1,64 @@
--- Crear países
-
 CREATE OR REPLACE FUNCTION add_country(
     p_country_code VARCHAR,
     p_country_name VARCHAR,
     p_timezone VARCHAR DEFAULT NULL
 )
-RETURNS TEXT AS
+RETURNS TABLE (
+    country_code VARCHAR,
+    country_name VARCHAR,
+    timezone VARCHAR
+)
+AS
 $$
 DECLARE
     v_exists BOOLEAN;
     v_country_code_upper VARCHAR;
 BEGIN
-    -- ============================
-    -- VALIDACIÓN Y NORMALIZACIÓN DEL CÓDIGO DEL PAÍS
-    -- ============================
+    -- VALIDACIÓN DEL CÓDIGO
     IF p_country_code IS NULL OR LENGTH(TRIM(p_country_code)) = 0 THEN
-        RETURN 'El código del país no puede estar vacío.';
+        RAISE EXCEPTION 'El código del país no puede estar vacío.';
     ELSIF LENGTH(p_country_code) < 2 OR LENGTH(p_country_code) > 5 THEN
-        RETURN 'El código del país debe tener entre 2 y 5 caracteres.';
+        RAISE EXCEPTION 'El código del país debe tener entre 2 y 5 caracteres.';
     END IF;
-    
-    -- Convertir country_code a mayúsculas
+
     v_country_code_upper := UPPER(p_country_code);
-    
+
     IF v_country_code_upper !~ '^[A-Z]+$' THEN
-        RETURN 'El código de país debe contener solo letras.';
+        RAISE EXCEPTION 'El código de país debe contener solo letras.';
     END IF;
-    
-    -- ============================
-    -- VALIDACIÓN DEL NOMBRE DEL PAÍS
-    -- ============================
+
+    -- VALIDACIÓN DEL NOMBRE
     IF p_country_name IS NULL OR LENGTH(TRIM(p_country_name)) = 0 THEN
-        RETURN 'El nombre del país no puede estar vacío.';
+        RAISE EXCEPTION 'El nombre del país no puede estar vacío.';
     ELSIF LENGTH(p_country_name) > 50 THEN
-        RETURN 'El nombre del país no puede tener más de 50 caracteres.';
+        RAISE EXCEPTION 'El nombre del país no puede tener más de 50 caracteres.';
     END IF;
-    
-    -- ============================
-    -- VALIDACIÓN DE ZONA HORARIA (si se proporciona)
-    -- ============================
+
+    -- VALIDACIÓN DEL TIMEZONE
     IF p_timezone IS NOT NULL AND LENGTH(p_timezone) > 50 THEN
-        RETURN 'La zona horaria no puede tener más de 50 caracteres.';
+        RAISE EXCEPTION 'La zona horaria no puede tener más de 50 caracteres.';
     END IF;
-    
-    -- ============================
-    -- VERIFICAR SI EL PAÍS YA EXISTE
-    -- ============================
+
+    -- VERIFICAR DUPLICADOS
     SELECT EXISTS (
-        SELECT 1 FROM countries 
-        WHERE country_code = v_country_code_upper OR UPPER(country_name) = UPPER(p_country_name)
+        SELECT 1 
+        FROM countries c
+        WHERE c.country_code = v_country_code_upper 
+           OR UPPER(c.country_name) = UPPER(p_country_name)
     ) INTO v_exists;
-    
+
     IF v_exists THEN
-        RETURN 'Ya existe un país con el mismo código o nombre.';
+        RAISE EXCEPTION 'Ya existe un país con el mismo código o nombre.';
     END IF;
-    
-    -- ============================
-    -- INSERTAR REGISTRO
-    -- ============================
+
+    -- INSERTAR Y RETORNAR
+    RETURN QUERY
     INSERT INTO countries (country_code, country_name, timezone)
-    VALUES (v_country_code_upper, p_country_name, p_timezone);
-    
-    RETURN format('País %s (%s) agregado correctamente.', p_country_name, v_country_code_upper);
+    VALUES (v_country_code_upper, p_country_name, p_timezone)
+    RETURNING countries.country_code, countries.country_name, countries.timezone;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 --Editar países
