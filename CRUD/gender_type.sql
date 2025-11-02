@@ -1,47 +1,30 @@
--- ============================
--- FUNCIÓN: AGREGAR TIPO DE GÉNERO
--- ============================
-CREATE OR REPLACE FUNCTION add_gender_type(
-    p_gender_name VARCHAR
-)
-RETURNS TEXT AS
+CREATE OR REPLACE FUNCTION add_gender_type(p_gender_name VARCHAR)
+RETURNS gender_type AS
 $$
 DECLARE
-    v_exists BOOLEAN;
-    v_gender_id INTEGER;
+    v_result gender_type;
 BEGIN
-    -- ============================
-    -- VALIDACIÓN DEL NOMBRE DEL GÉNERO
-    -- ============================
     IF p_gender_name IS NULL OR LENGTH(TRIM(p_gender_name)) = 0 THEN
         RAISE EXCEPTION 'El nombre del género no puede estar vacío.';
     ELSIF LENGTH(p_gender_name) > 30 THEN
         RAISE EXCEPTION 'El nombre del género no puede tener más de 30 caracteres.';
     END IF;
-    
-    -- ============================
-    -- VERIFICAR SI EL GÉNERO YA EXISTE
-    -- ============================
-    SELECT EXISTS (
-        SELECT 1 FROM gender_type 
-        WHERE UPPER(gender_name) = UPPER(p_gender_name)
-    ) INTO v_exists;
-    
-    IF v_exists THEN
+
+    IF EXISTS (SELECT 1 FROM gender_type WHERE UPPER(gender_name) = UPPER(p_gender_name)) THEN
         RAISE EXCEPTION 'Ya existe un género con el nombre %.', p_gender_name;
     END IF;
-    
-    -- ============================
-    -- INSERTAR REGISTRO
-    -- ============================
+
     INSERT INTO gender_type (gender_name)
     VALUES (p_gender_name)
-    RETURNING gender_id INTO v_gender_id;
-    
-    RETURN format('Género "%s" agregado correctamente con ID %s.', p_gender_name, v_gender_id);
+    RETURNING * INTO v_result;
+
+    RETURN v_result;
 END;
 $$ LANGUAGE plpgsql;
 
+-- ============================
+-- FUNCIÓN: ACTUALIZAR TIPO DE GÉNERO
+-- ============================
 -- ============================
 -- FUNCIÓN: ACTUALIZAR TIPO DE GÉNERO
 -- ============================
@@ -49,11 +32,11 @@ CREATE OR REPLACE FUNCTION update_gender_type(
     p_gender_id INTEGER,
     p_gender_name VARCHAR
 )
-RETURNS TEXT AS
+RETURNS gender_type AS
 $$
 DECLARE
     v_exists BOOLEAN;
-    v_old_name VARCHAR;
+    v_result gender_type;
 BEGIN
     -- ============================
     -- VALIDACIÓN DEL ID
@@ -63,17 +46,6 @@ BEGIN
     END IF;
     
     -- ============================
-    -- VERIFICAR EXISTENCIA DEL GÉNERO
-    -- ============================
-    SELECT gender_name INTO v_old_name
-    FROM gender_type
-    WHERE gender_id = p_gender_id;
-    
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'No existe ningún género con el ID %.', p_gender_id;
-    END IF;
-    
-    -- ============================
     -- VALIDACIÓN DEL NOMBRE DEL GÉNERO
     -- ============================
     IF p_gender_name IS NULL OR LENGTH(TRIM(p_gender_name)) = 0 THEN
@@ -81,9 +53,17 @@ BEGIN
     ELSIF LENGTH(p_gender_name) > 30 THEN
         RAISE EXCEPTION 'El nombre del género no puede tener más de 30 caracteres.';
     END IF;
+
+    -- ============================
+    -- VALIDAR EXISTENCIA DEL GÉNERO
+    -- ============================
+    PERFORM 1 FROM gender_type WHERE gender_id = p_gender_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No existe ningún género con el ID %.', p_gender_id;
+    END IF;
     
     -- ============================
-    -- VALIDAR QUE EL NUEVO NOMBRE NO ESTÉ REPETIDO EN OTRO GÉNERO
+    -- VALIDAR QUE EL NUEVO NOMBRE NO ESTÉ REPETIDO
     -- ============================
     SELECT EXISTS(
         SELECT 1 FROM gender_type
@@ -96,17 +76,14 @@ BEGIN
     END IF;
     
     -- ============================
-    -- ACTUALIZAR GÉNERO
+    -- ACTUALIZAR GÉNERO Y RETORNAR FILA COMPLETA
     -- ============================
     UPDATE gender_type
     SET gender_name = p_gender_name
-    WHERE gender_id = p_gender_id;
-    
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'No se pudo actualizar el género con ID %.', p_gender_id;
-    END IF;
-    
-    RETURN format('Género actualizado de "%s" a "%s" (ID: %s).', v_old_name, p_gender_name, p_gender_id);
+    WHERE gender_id = p_gender_id
+    RETURNING * INTO v_result;
+
+    RETURN v_result;
 END;
 $$ LANGUAGE plpgsql;
 
