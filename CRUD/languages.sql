@@ -29,7 +29,7 @@ RETURNS TABLE (
     updated_at TIMESTAMP
 ) 
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
     RETURN QUERY
     SELECT 
@@ -40,7 +40,7 @@ BEGIN
     FROM languages l
     WHERE l.language_code = p_language_code;
 END;
-$;
+$$;
 
 
 -- Función para crear un nuevo idioma
@@ -57,7 +57,7 @@ RETURNS TABLE (
     updated_at TIMESTAMP
 )
 LANGUAGE plpgsql
-AS $
+AS $$
 DECLARE
     v_exists_code BOOLEAN;
     v_exists_name BOOLEAN;
@@ -113,13 +113,17 @@ BEGIN
     -- Retornar el resultado exitoso con los datos creados
     RETURN QUERY SELECT TRUE, 'Idioma creado exitosamente'::TEXT, p_language_code, p_language_name, v_created_at, v_updated_at;
 END;
-$;
+$$;
 
 CREATE OR REPLACE FUNCTION update_language(
     p_language_code VARCHAR,
     p_language_name VARCHAR
 )
-RETURNS TEXT AS
+RETURNS TABLE (
+    language_code VARCHAR,
+    language_name VARCHAR,
+    updated_at TIMESTAMP
+) AS
 $$
 DECLARE
     v_exists BOOLEAN;
@@ -134,13 +138,12 @@ BEGIN
         RAISE EXCEPTION 'El código del idioma debe tener exactamente 2 caracteres (ISO 639-1).';
     END IF;
     
-    -- Convertir language_code a mayúsculas
     v_language_code_upper := UPPER(p_language_code);
     
     -- ============================
     -- VERIFICAR EXISTENCIA DEL IDIOMA
     -- ============================
-    SELECT EXISTS(SELECT 1 FROM languages WHERE language_code = v_language_code_upper)
+    SELECT EXISTS(SELECT 1 FROM languages l WHERE l.language_code = v_language_code_upper)
     INTO v_exists;
     
     IF NOT v_exists THEN
@@ -160,9 +163,9 @@ BEGIN
     -- VALIDAR QUE EL NUEVO NOMBRE NO ESTÉ REPETIDO EN OTRO IDIOMA
     -- ============================
     SELECT EXISTS(
-        SELECT 1 FROM languages
-        WHERE UPPER(language_name) = UPPER(p_language_name)
-        AND language_code <> v_language_code_upper
+        SELECT 1 FROM languages l
+        WHERE UPPER(l.language_name) = UPPER(p_language_name)
+        AND l.language_code <> v_language_code_upper
     ) INTO v_exists;
     
     IF v_exists THEN
@@ -170,21 +173,24 @@ BEGIN
     END IF;
     
     -- ============================
-    -- ACTUALIZAR IDIOMA
+    -- ACTUALIZAR IDIOMA Y RETORNAR FILA
     -- ============================
-    UPDATE languages
+    UPDATE languages l
     SET
         language_name = p_language_name,
         updated_at = CURRENT_TIMESTAMP
-    WHERE language_code = v_language_code_upper;
+    WHERE l.language_code = v_language_code_upper
+    RETURNING l.language_code, l.language_name, l.updated_at
+    INTO language_code, language_name, updated_at;
     
     IF NOT FOUND THEN
         RAISE EXCEPTION 'No se pudo actualizar el idioma con código %.', v_language_code_upper;
     END IF;
-    
-    RETURN format('Idioma %s (%s) actualizado correctamente.', p_language_name, v_language_code_upper);
+
+    RETURN NEXT;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 CREATE OR REPLACE FUNCTION delete_language(
