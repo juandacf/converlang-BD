@@ -1,4 +1,6 @@
-
+-- ======================================
+-- FUNCIÓN: Insertar nuevo usuario
+-- ======================================
 CREATE OR REPLACE FUNCTION fun_insert_usuarios(
     wfirst_name users.first_name%TYPE,
     wlast_name users.last_name%TYPE,
@@ -12,12 +14,14 @@ CREATE OR REPLACE FUNCTION fun_insert_usuarios(
     wtarget_lang_id users.target_lang_id%TYPE,
     wmatch_quantity users.match_quantity%TYPE,
     wbank_id users.bank_id%TYPE,
-    wdescription users.description%TYPE
+    wdescription users.description%TYPE,
+    wrole_code users.role_code%TYPE       -- 🔹 nuevo parámetro agregado
 )
 RETURNS SETOF users AS $$
 DECLARE
     wuser_existe users.email%TYPE;
     wnew_user users%ROWTYPE;
+    wrol_existe BOOLEAN;
 BEGIN
     -- Validar si el email ya existe
     SELECT u.email INTO wuser_existe
@@ -72,16 +76,25 @@ BEGIN
         RAISE EXCEPTION 'Error: Debe tener al menos 15 años para registrarse';
     END IF;
 
+    -- Validar rol
+    SELECT TRUE INTO wrol_existe
+    FROM user_roles
+    WHERE role_code = wrole_code;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Error: El rol "%" no es válido', wrole_code;
+    END IF;
+
     -- Inserción del usuario
     INSERT INTO users (
         first_name, last_name, email, password_hash, gender_id,
         birth_date, country_id, profile_photo, native_lang_id,
-        target_lang_id, match_quantity, bank_id, description
+        target_lang_id, match_quantity, bank_id, description, role_code
     )
     VALUES (
         wfirst_name, wlast_name, wemail, wpassword_hash, wgender_id,
         wbirth_date, wcountry_id, wprofile_photo, wnative_lang_id,
-        wtarget_lang_id, wmatch_quantity, wbank_id, wdescription
+        wtarget_lang_id, wmatch_quantity, wbank_id, wdescription, wrole_code
     )
     RETURNING * INTO wnew_user;
 
@@ -89,7 +102,6 @@ BEGIN
     RETURN;
 END;
 $$ LANGUAGE plpgsql;
-
 
 -- FUNCIÓN PARA VALIDAR EXISTENCIA DE PAÍS
 -- Función que valida si un código de país existe en la tabla countries.
