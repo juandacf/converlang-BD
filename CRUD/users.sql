@@ -189,11 +189,11 @@ CREATE OR REPLACE FUNCTION update_user(
     p_gender_id INTEGER,
     p_birth_date DATE,
     p_country_id VARCHAR,
-    p_profile_photo VARCHAR DEFAULT NULL,
+    p_profile_photo VARCHAR ,
     p_native_lang_id VARCHAR,
     p_target_lang_id VARCHAR,
     p_match_quantity INTEGER,
-    p_bank_id VARCHAR DEFAULT NULL,
+    p_bank_id VARCHAR,
     p_description TEXT DEFAULT 'NO APLICA'
 )
 RETURNS TEXT AS
