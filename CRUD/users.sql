@@ -194,7 +194,7 @@ CREATE OR REPLACE FUNCTION update_user(
     p_target_lang_id VARCHAR,
     p_match_quantity INTEGER,
     p_bank_id VARCHAR,
-    p_description TEXT DEFAULT 'NO APLICA'
+    p_description TEXT 
 )
 RETURNS TEXT AS
 $$
