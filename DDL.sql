@@ -231,17 +231,15 @@ CREATE TABLE teaching_sessions (
 -- Almacena los mensajes intercambiados durante las sesiones entre usuarios.
 -- ================================================================
 CREATE TABLE chat_logs (
-    message_id          VARCHAR(50) PRIMARY KEY,
+    message_id          SERIAL PRIMARY KEY,
     match_id            INTEGER NOT NULL,
     sender_id           INTEGER NOT NULL,
     message             TEXT NOT NULL,
     timestamp           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_corrected        BOOLEAN DEFAULT FALSE,
-    reply_to            VARCHAR(50),
     is_read             BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_match_id  FOREIGN KEY (match_id)  REFERENCES user_matches(match_id),
-    CONSTRAINT fk_sender    FOREIGN KEY (sender_id) REFERENCES users(id_user),
-    CONSTRAINT fk_reply_to  FOREIGN KEY (reply_to)  REFERENCES chat_logs(message_id)
+    CONSTRAINT fk_sender    FOREIGN KEY (sender_id) REFERENCES users(id_user)
 );
 
 
@@ -457,9 +455,9 @@ INSERT INTO user_likes (id_user_giver, id_user_receiver) VALUES
 INSERT INTO user_matches (user_1, user_2) VALUES
 (1, 3);
 
-INSERT INTO chat_logs (message_id, match_id, sender_id, message) VALUES
-('MSG_001', 1, 1, 'Hola John! Cómo estás?'),
-('MSG_002', 1, 3, 'Hi Carlos! I’m great, thanks!');
+INSERT INTO chat_logs (match_id, sender_id, message) VALUES
+( 1, 1, 'Hola John! Cómo estás?'),
+( 1, 3, 'Hi Carlos! I’m great, thanks!');
 
 
 INSERT INTO titles (title_code, title_name, title_description) VALUES
