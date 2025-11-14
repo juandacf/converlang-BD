@@ -191,3 +191,48 @@ BEGIN
     WHERE b.bank_code = v_bank_code_upper;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ================================================================
+-- FUNCIÓN: delete_bank_by_code
+-- Descripción: Elimina un banco del sistema por su código
+-- ================================================================
+CREATE OR REPLACE FUNCTION delete_bank_by_code(
+    p_bank_code VARCHAR
+)
+RETURNS TEXT AS
+$$
+DECLARE
+    v_bank_code_upper VARCHAR;
+    v_bank_exists BOOLEAN;
+BEGIN
+    -- ============================
+    -- VALIDACIÓN DEL BANK_CODE
+    -- ============================
+    IF p_bank_code IS NULL OR LENGTH(TRIM(p_bank_code)) = 0 THEN
+        RAISE EXCEPTION 'El código del banco no puede estar vacío.';
+    END IF;
+    
+    v_bank_code_upper := UPPER(p_bank_code);
+    
+    -- ============================
+    -- VERIFICAR SI EL BANCO EXISTE
+    -- ============================
+    SELECT EXISTS (
+        SELECT 1 FROM banks WHERE banks.bank_code = v_bank_code_upper
+    ) INTO v_bank_exists;
+    
+    IF NOT v_bank_exists THEN
+        RAISE EXCEPTION 'No existe ningún banco con el código %.', v_bank_code_upper;
+    END IF;
+    
+    -- ============================
+    -- ELIMINACIÓN
+    -- ============================
+    DELETE FROM banks WHERE banks.bank_code = v_bank_code_upper;
+    
+    -- ============================
+    -- RETORNO
+    -- ============================
+    RETURN format('Banco con código %s eliminado correctamente.', v_bank_code_upper);
+END;
+$$ LANGUAGE plpgsql;
