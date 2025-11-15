@@ -606,3 +606,55 @@ BEGIN
     RETURN format('Rol cambiado a "%s" para usuario ID %s.', v_role_code_lower, p_id_user);
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fun_find_user_by_email(p_email VARCHAR)
+RETURNS TABLE (
+    id_user INTEGER,
+    first_name VARCHAR,
+    last_name VARCHAR,
+    email VARCHAR,
+    password_hash VARCHAR,
+    gender_id INTEGER,
+    birth_date DATE,
+    country_id VARCHAR,
+    profile_photo VARCHAR,
+    native_lang_id VARCHAR,
+    target_lang_id VARCHAR,
+    match_quantity INTEGER,
+    bank_id VARCHAR,
+    role_code VARCHAR,
+    description TEXT,
+    is_active BOOLEAN,
+    email_verified BOOLEAN,
+    last_login TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+)
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        u.id_user,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.password_hash,
+        u.gender_id,
+        u.birth_date,
+        u.country_id,
+        u.profile_photo,
+        u.native_lang_id,
+        u.target_lang_id,
+        u.match_quantity,
+        u.bank_id,
+        u.role_code,
+        u.description,
+        u.is_active,
+        u.email_verified,
+        u.last_login,
+        u.created_at,
+        u.updated_at
+    FROM users u
+    WHERE u.email = p_email;
+END;
+$$ LANGUAGE plpgsql;
