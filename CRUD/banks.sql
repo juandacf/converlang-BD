@@ -2,6 +2,52 @@
 -- FUNCIÓN: add_bank
 -- Descripción: Agrega un nuevo banco al sistema
 -- ================================================================
+-- ================================================================
+-- FUNCIÓN: get_all_banks
+-- Descripción: Obtiene todos los bancos registrados en el sistema
+-- ================================================================
+CREATE OR REPLACE FUNCTION get_all_banks()
+RETURNS TABLE(bank_code VARCHAR, bank_name VARCHAR) AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT b.bank_code, b.bank_name
+    FROM banks b
+    ORDER BY b.bank_name;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ================================================================
+-- FUNCIÓN: get_bank_by_code
+-- Descripción: Obtiene un banco específico por su código
+-- ================================================================
+CREATE OR REPLACE FUNCTION get_bank_by_code(
+    p_bank_code VARCHAR
+)
+RETURNS TABLE(bank_code VARCHAR, bank_name VARCHAR) AS
+$$
+DECLARE
+    v_bank_code_upper VARCHAR;
+BEGIN
+    -- ============================
+    -- VALIDACIÓN Y NORMALIZACIÓN
+    -- ============================
+    IF p_bank_code IS NULL OR LENGTH(TRIM(p_bank_code)) = 0 THEN
+        RAISE EXCEPTION 'El código del banco no puede estar vacío.';
+    END IF;
+    
+    v_bank_code_upper := UPPER(p_bank_code);
+    
+    -- ============================
+    -- CONSULTA
+    -- ============================
+    RETURN QUERY
+    SELECT b.bank_code, b.bank_name
+    FROM banks b
+    WHERE b.bank_code = v_bank_code_upper;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION add_bank(
     p_bank_code VARCHAR,
     p_bank_name VARCHAR,
