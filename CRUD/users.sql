@@ -608,7 +608,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION fun_find_user_by_email(p_email VARCHAR)
 
@@ -637,3 +637,41 @@ BEGIN
     WHERE u.email = p_email;
 END;
 $$ LANGUAGE plpgsql;
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+CREATE OR REPLACE FUNCTION fun_get_user_matches(p_user_id INTEGER)
+RETURNS TABLE (
+    match_id INTEGER,
+    matched_user_id INTEGER,
+    match_time TIMESTAMP,
+    first_name VARCHAR,
+    last_name VARCHAR,
+    email VARCHAR,
+    profile_photo VARCHAR
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        m.match_id,
+        CASE 
+            WHEN m.user_1 = p_user_id THEN m.user_2
+            ELSE m.user_1
+        END AS matched_user_id,
+        m.match_time,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.profile_photo
+    FROM user_matches m
+    JOIN users u 
+        ON u.id_user = CASE 
+                           WHEN m.user_1 = p_user_id THEN m.user_2
+                           ELSE m.user_1
+                       END
+    WHERE m.user_1 = p_user_id OR m.user_2 = p_user_id
+    ORDER BY m.match_time DESC;
+END;
+$$;
