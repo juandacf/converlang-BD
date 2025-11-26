@@ -1,119 +1,273 @@
 -- ================================================================
--- FUNCIÓN CORREGIDA: Insertar perfil de profesor
+-- FUNCIÓN: OBTENER TODOS LOS PERFILES (Get All)
+-- Recibe un booleano: TRUE (solo verificados) o FALSE (todos)
 -- ================================================================
--- IMPORTANTE: Esta versión está actualizada para usar role_code 
--- directamente en la tabla users en lugar de user_role_assignments
-
-CREATE OR REPLACE FUNCTION fun_insert_teacher_profile(
-    wuser_id teacher_profiles.user_id%TYPE,
-    wteaching_language_id teacher_profiles.teaching_language_id%TYPE,
-    wlang_certification teacher_profiles.lang_certification%TYPE,
-    wacademic_title teacher_profiles.academic_title%TYPE,
-    wexperience_certification teacher_profiles.experience_certification%TYPE,
-    whourly_rate teacher_profiles.hourly_rate%TYPE,
-    wspecialization teacher_profiles.specialization%TYPE,
-    wyears_experience teacher_profiles.years_experience%TYPE,
-    wavailability_notes teacher_profiles.availability_notes%TYPE
-) RETURNS VARCHAR AS $$
-DECLARE
-    wprofile_existe teacher_profiles.user_id%TYPE;
-    wuser_role_code users.role_code%TYPE;
-    winserted_user_id teacher_profiles.user_id%TYPE;
+CREATE OR REPLACE FUNCTION get_all_teacher_profiles(
+    p_verified_only BOOLEAN DEFAULT FALSE
+)
+RETURNS TABLE (
+    user_id INTEGER,
+    teaching_language_id VARCHAR,
+    lang_certification VARCHAR,
+    academic_title VARCHAR,
+    experience_certification VARCHAR,
+    hourly_rate DECIMAL,
+    specialization TEXT,
+    years_experience INTEGER,
+    availability_notes TEXT,
+    is_verified BOOLEAN,
+    verified_at TIMESTAMP,
+    verified_by INTEGER,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+)
+AS
+$$
 BEGIN
-    -- Validar que el usuario existe y está activo
-    IF NOT fun_valida_usuario(wuser_id) THEN
-        RETURN 'Error: Usuario no válido o inactivo';
+    IF p_verified_only THEN
+        RETURN QUERY
+        SELECT
+            tp.user_id, tp.teaching_language_id, tp.lang_certification,
+            tp.academic_title, tp.experience_certification, tp.hourly_rate,
+            tp.specialization, tp.years_experience, tp.availability_notes,
+            tp.is_verified, tp.verified_at, tp.verified_by,
+            tp.created_at, tp.updated_at
+        FROM teacher_profiles tp
+        WHERE tp.is_verified = TRUE
+        ORDER BY tp.created_at DESC;
+    ELSE
+        RETURN QUERY
+        SELECT
+            tp.user_id, tp.teaching_language_id, tp.lang_certification,
+            tp.academic_title, tp.experience_certification, tp.hourly_rate,
+            tp.specialization, tp.years_experience, tp.availability_notes,
+            tp.is_verified, tp.verified_at, tp.verified_by,
+            tp.created_at, tp.updated_at
+        FROM teacher_profiles tp
+        ORDER BY tp.created_at DESC;
     END IF;
-    
-    -- Validar que no tenga ya un perfil de profesor
-    SELECT tp.user_id INTO wprofile_existe 
-    FROM teacher_profiles tp 
-    WHERE tp.user_id = wuser_id;
-    
-    IF FOUND THEN
-        RAISE NOTICE 'ERROR: El usuario ya tiene un perfil de profesor';
-        RETURN 'Error: Ya existe un perfil de profesor para este usuario';
-    END IF;
-    
-    -- ✅ CORRECCIÓN: Validar que el usuario tenga rol de TEACHER usando la columna role_code
-    SELECT u.role_code INTO wuser_role_code
-    FROM users u
-    WHERE u.id_user = wuser_id;
-    
-    IF wuser_role_code != 'teacher' THEN
-        RAISE NOTICE 'ERROR: Usuario debe tener rol TEACHER. Rol actual: %', wuser_role_code;
-        RETURN 'Error: El usuario debe tener rol de profesor (teacher)';
-    END IF;
-    
-    -- Validar idioma de enseñanza
-    IF NOT fun_valida_idioma(wteaching_language_id) THEN
-        RETURN 'Error: Idioma de enseñanza no válido';
-    END IF;
-    
-    -- Validar tarifa por hora
-    IF whourly_rate IS NOT NULL AND whourly_rate < 0 THEN
-        RAISE NOTICE 'ERROR: La tarifa por hora no puede ser negativa';
-        RETURN 'Error: La tarifa por hora debe ser mayor o igual a cero';
-    END IF;
-    
-    -- Validar años de experiencia
-    IF wyears_experience IS NOT NULL AND wyears_experience < 0 THEN
-        RAISE NOTICE 'ERROR: Los años de experiencia no pueden ser negativos';
-        RETURN 'Error: Los años de experiencia deben ser mayor o igual a cero';
-    END IF;
-    
-    -- Insertar perfil de profesor
-    BEGIN
-        INSERT INTO teacher_profiles (
-            user_id, teaching_language_id, lang_certification, 
-            academic_title, experience_certification, hourly_rate,
-            specialization, years_experience, availability_notes
-        ) VALUES (
-            wuser_id, wteaching_language_id, wlang_certification,
-            wacademic_title, wexperience_certification, whourly_rate,
-            wspecialization, wyears_experience, wavailability_notes
-        ) RETURNING user_id INTO winserted_user_id;
-        
-        RAISE NOTICE 'Perfil de profesor creado exitosamente para usuario ID: %', winserted_user_id;
-        RETURN 'Success: Perfil creado para usuario ID ' || winserted_user_id;
-        
-    EXCEPTION 
-        -- Capturar error específico de violación de clave única
-        WHEN unique_violation THEN
-            RAISE NOTICE 'ERROR: El usuario ya tiene un perfil de profesor';
-            RETURN 'Error: Ya existe un perfil de profesor para este usuario';
-            
-        -- Capturar violación de clave foránea
-        WHEN foreign_key_violation THEN
-            IF POSITION('user_id' IN SQLERRM) > 0 THEN
-                RETURN 'Error: Usuario no válido';
-            ELSIF POSITION('teaching_language_id' IN SQLERRM) > 0 THEN
-                RETURN 'Error: Idioma de enseñanza no válido';
-            ELSE
-                RETURN 'Error: Referencia de datos no válida';
-            END IF;
-            
-        -- Cualquier otro error
-        WHEN OTHERS THEN
-            RAISE NOTICE 'ERROR al insertar perfil de profesor: %', SQLERRM;
-            RETURN 'Error: No se pudo crear el perfil de profesor';
-    END;
 END;
 $$ LANGUAGE plpgsql;
 
 -- ================================================================
--- COMENTARIOS SOBRE LOS CAMBIOS:
+-- 5. FUNCIÓN: OBTENER PERFIL POR ID (Get One)
 -- ================================================================
-/*
-CAMBIO PRINCIPAL:
-- Antes: SELECT EXISTS(SELECT 1 FROM user_role_assignments ...)
-- Ahora: SELECT u.role_code FROM users u WHERE u.id_user = wuser_id
+CREATE OR REPLACE FUNCTION get_teacher_profile_by_id(
+    p_user_id INTEGER
+)
+RETURNS TABLE (
+    user_id INTEGER,
+    teaching_language_id VARCHAR,
+    lang_certification VARCHAR,
+    academic_title VARCHAR,
+    experience_certification VARCHAR,
+    hourly_rate DECIMAL,
+    specialization TEXT,
+    years_experience INTEGER,
+    availability_notes TEXT,
+    is_verified BOOLEAN,
+    verified_at TIMESTAMP,
+    verified_by INTEGER,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+)
+AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT
+        tp.user_id, tp.teaching_language_id, tp.lang_certification,
+        tp.academic_title, tp.experience_certification, tp.hourly_rate,
+        tp.specialization, tp.years_experience, tp.availability_notes,
+        tp.is_verified, tp.verified_at, tp.verified_by,
+        tp.created_at, tp.updated_at
+    FROM teacher_profiles tp
+    WHERE tp.user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
 
-RAZÓN:
-La tabla user_role_assignments ya no existe. El campo role_code
-ahora está directamente en la tabla users.
+-- ================================================================
+-- 1. MEJORA "POST": ADD_TEACHER_PROFILE
+-- ================================================================
+CREATE OR REPLACE FUNCTION add_teacher_profile(
+    p_user_id INTEGER,
+    p_teaching_language_id VARCHAR,
+    p_lang_certification VARCHAR DEFAULT NULL,
+    p_academic_title VARCHAR DEFAULT NULL,
+    p_experience_certification VARCHAR DEFAULT NULL,
+    p_hourly_rate DECIMAL DEFAULT NULL,
+    p_specialization TEXT DEFAULT NULL,
+    p_years_experience INTEGER DEFAULT NULL,
+    p_availability_notes TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+    user_id INTEGER,
+    teaching_language_id VARCHAR,
+    lang_certification VARCHAR,
+    academic_title VARCHAR,
+    experience_certification VARCHAR,
+    hourly_rate DECIMAL,
+    specialization TEXT,
+    years_experience INTEGER,
+    availability_notes TEXT,
+    is_verified BOOLEAN,
+    verified_at TIMESTAMP,
+    verified_by INTEGER,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+) AS
+$$
+DECLARE
+    v_exists BOOLEAN;
+    v_teaching_lang_upper VARCHAR;
+    v_user_role VARCHAR;
+BEGIN
+    -- 1. Validaciones previas (Idénticas a tu lógica original)
+    IF p_user_id IS NULL THEN RAISE EXCEPTION 'El ID del usuario no puede estar vacío.'; END IF;
+    
+    SELECT EXISTS(SELECT 1 FROM users WHERE id_user = p_user_id) INTO v_exists;
+    IF NOT v_exists THEN RAISE EXCEPTION 'No existe un usuario con el ID %.', p_user_id; END IF;
+    
+    SELECT role_code INTO v_user_role FROM users WHERE id_user = p_user_id;
+    IF v_user_role <> 'teacher' THEN RAISE EXCEPTION 'El usuario % no tiene rol de profesor.', p_user_id; END IF;
 
-VALIDACIÓN:
-Ahora verifica que users.role_code = 'teacher' en lugar de
-buscar en una tabla intermedia.
-*/
+    SELECT EXISTS(SELECT 1 FROM teacher_profiles tp WHERE tp.user_id = p_user_id) INTO v_exists;
+    IF v_exists THEN RAISE EXCEPTION 'Ya existe un perfil para el usuario %.', p_user_id; END IF;
+
+    -- 2. Normalización
+    v_teaching_lang_upper := UPPER(p_teaching_language_id);
+    
+    SELECT EXISTS(SELECT 1 FROM languages WHERE language_code = v_teaching_lang_upper) INTO v_exists;
+    IF NOT v_exists THEN RAISE EXCEPTION 'No existe el idioma %.', v_teaching_lang_upper; END IF;
+
+    -- 3. Inserción
+    INSERT INTO teacher_profiles (
+        user_id, teaching_language_id, lang_certification,
+        academic_title, experience_certification, hourly_rate,
+        specialization, years_experience, availability_notes
+    ) VALUES (
+        p_user_id, v_teaching_lang_upper, p_lang_certification,
+        p_academic_title, p_experience_certification, p_hourly_rate,
+        p_specialization, p_years_experience, p_availability_notes
+    );
+    
+    -- 4. RETORNO DEL OBJETO (La mejora clave)
+    RETURN QUERY 
+    SELECT tp.user_id, tp.teaching_language_id, tp.lang_certification,
+           tp.academic_title, tp.experience_certification, tp.hourly_rate,
+           tp.specialization, tp.years_experience, tp.availability_notes,
+           tp.is_verified, tp.verified_at, tp.verified_by,
+           tp.created_at, tp.updated_at
+    FROM teacher_profiles tp 
+    WHERE tp.user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- ================================================================
+-- 2. MEJORA "PATCH/UPDATE": UPDATE_TEACHER_PROFILE
+-- Cambio: Retorna la fila actualizada y actualiza el campo updated_at.
+-- ================================================================
+CREATE OR REPLACE FUNCTION update_teacher_profile(
+    p_user_id INTEGER,
+    p_teaching_language_id VARCHAR,
+    p_lang_certification VARCHAR DEFAULT NULL,
+    p_academic_title VARCHAR DEFAULT NULL,
+    p_experience_certification VARCHAR DEFAULT NULL,
+    p_hourly_rate DECIMAL DEFAULT NULL,
+    p_specialization TEXT DEFAULT NULL,
+    p_years_experience INTEGER DEFAULT NULL,
+    p_availability_notes TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+    user_id INTEGER,
+    teaching_language_id VARCHAR,
+    lang_certification VARCHAR,
+    academic_title VARCHAR,
+    experience_certification VARCHAR,
+    hourly_rate DECIMAL,
+    specialization TEXT,
+    years_experience INTEGER,
+    availability_notes TEXT,
+    is_verified BOOLEAN,
+    verified_at TIMESTAMP,
+    verified_by INTEGER,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+) AS
+$$
+DECLARE
+    v_exists BOOLEAN;
+    v_teaching_lang_upper VARCHAR;
+BEGIN
+    -- 1. Validar existencia
+    SELECT EXISTS(SELECT 1 FROM teacher_profiles tp WHERE tp.user_id = p_user_id) INTO v_exists;
+    IF NOT v_exists THEN RAISE EXCEPTION 'No existe perfil para el usuario %.', p_user_id; END IF;
+
+    -- 2. Normalización idioma (si viene null, se manejará en el UPDATE, pero aquí validamos si viene)
+    IF p_teaching_language_id IS NOT NULL THEN
+        v_teaching_lang_upper := UPPER(p_teaching_language_id);
+         SELECT EXISTS(SELECT 1 FROM languages WHERE language_code = v_teaching_lang_upper) INTO v_exists;
+        IF NOT v_exists THEN RAISE EXCEPTION 'No existe el idioma %.', v_teaching_lang_upper; END IF;
+    ELSE
+        -- Si no envían idioma nuevo, recuperamos el actual para no romper la lógica
+        SELECT teaching_language_id INTO v_teaching_lang_upper FROM teacher_profiles tp WHERE tp.user_id = p_user_id;
+    END IF;
+
+    -- 3. Actualización (Sobrescribe valores)
+    UPDATE teacher_profiles tp
+    SET
+        teaching_language_id = v_teaching_lang_upper,
+        lang_certification = p_lang_certification,
+        academic_title = p_academic_title,
+        experience_certification = p_experience_certification,
+        hourly_rate = p_hourly_rate,
+        specialization = p_specialization,
+        years_experience = p_years_experience,
+        availability_notes = p_availability_notes,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE tp.user_id = p_user_id;
+    
+    -- 4. RETORNO DEL OBJETO ACTUALIZADO
+    RETURN QUERY 
+    SELECT tp.user_id, tp.teaching_language_id, tp.lang_certification,
+           tp.academic_title, tp.experience_certification, tp.hourly_rate,
+           tp.specialization, tp.years_experience, tp.availability_notes,
+           tp.is_verified, tp.verified_at, tp.verified_by,
+           tp.created_at, tp.updated_at
+    FROM teacher_profiles tp 
+    WHERE tp.user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- ================================================================
+-- 3. MEJORA "DELETE": DELETE_TEACHER_PROFILE
+-- Cambio: Retorna un JSON o mensaje claro, manejando errores de FK.
+-- ================================================================
+CREATE OR REPLACE FUNCTION delete_teacher_profile(
+    p_user_id INTEGER
+)
+RETURNS TEXT AS
+$$
+DECLARE
+    v_exists BOOLEAN;
+BEGIN
+    -- 1. Verificar existencia
+    SELECT EXISTS(SELECT 1 FROM teacher_profiles tp WHERE tp.user_id = p_user_id) INTO v_exists;
+    IF NOT v_exists THEN
+        RAISE EXCEPTION 'No existe un perfil de profesor para el usuario con ID %.', p_user_id;
+    END IF;
+    
+    -- 2. Intentar Eliminar
+    BEGIN
+        DELETE FROM teacher_profiles tp WHERE tp.user_id = p_user_id;
+    EXCEPTION
+        WHEN foreign_key_violation THEN
+            RAISE EXCEPTION 'No se puede eliminar el perfil (ID: %) porque tiene clases o registros asociados.', p_user_id;
+    END;
+    
+    -- 3. Retornar mensaje de éxito (esto lo captura el service y lo devuelve)
+    RETURN 'Perfil de profesor eliminado correctamente';
+END;
+$$ LANGUAGE plpgsql;
