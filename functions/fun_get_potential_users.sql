@@ -21,9 +21,9 @@ BEGIN
     FROM users
     WHERE users.id_user = p_id_user;
 
-    IF v_limit IS NULL THEN
-        RAISE EXCEPTION 'No existe un usuario con id %', p_id_user;
-    END IF;
+IF v_limit = 0 THEN
+    v_limit := 50; -- o cualquier número por defecto
+END IF;
 
     RETURN QUERY
     SELECT 
