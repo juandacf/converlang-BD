@@ -104,61 +104,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ============================
--- FUNCIÓN: CREAR MATCH AUTOMÁTICAMENTE SI HAY LIKE MUTUO
--- ============================
-CREATE OR REPLACE FUNCTION create_match_if_mutual_like(
-    p_user_giver INTEGER,
-    p_user_receiver INTEGER
-)
-RETURNS TEXT AS
+CREATE OR REPLACE FUNCTION trg_create_match_on_mutual_like()
+RETURNS TRIGGER AS
 $$
 DECLARE
-    v_mutual_like BOOLEAN;
-    v_match_exists BOOLEAN;
-    v_ordered_user1 INTEGER;
-    v_ordered_user2 INTEGER;
-    v_match_id INTEGER;
+    v_user1 INTEGER;
+    v_user2 INTEGER;
 BEGIN
-    -- Ordenar usuarios
-    IF p_user_giver < p_user_receiver THEN
-        v_ordered_user1 := p_user_giver;
-        v_ordered_user2 := p_user_receiver;
-    ELSE
-        v_ordered_user1 := p_user_receiver;
-        v_ordered_user2 := p_user_giver;
+    -- Si existe like inverso...
+    IF EXISTS (
+        SELECT 1
+        FROM user_likes
+        WHERE id_user_giver = NEW.id_user_receiver
+          AND id_user_receiver = NEW.id_user_giver
+    ) THEN
+
+        -- Ordenar usuarios (cumplir constraint user_1 < user_2)
+        IF NEW.id_user_giver < NEW.id_user_receiver THEN
+            v_user1 := NEW.id_user_giver;
+            v_user2 := NEW.id_user_receiver;
+        ELSE
+            v_user1 := NEW.id_user_receiver;
+            v_user2 := NEW.id_user_giver;
+        END IF;
+
+        -- Insertar match (si no existe)
+        INSERT INTO user_matches (user_1, user_2)
+        VALUES (v_user1, v_user2)
+        ON CONFLICT (user_1, user_2) DO NOTHING;
+
     END IF;
-    
-    -- Verificar si existe like mutuo
-    SELECT (
-        EXISTS(SELECT 1 FROM user_likes WHERE id_user_giver = v_ordered_user1 AND id_user_receiver = v_ordered_user2)
-        AND
-        EXISTS(SELECT 1 FROM user_likes WHERE id_user_giver = v_ordered_user2 AND id_user_receiver = v_ordered_user1)
-    ) INTO v_mutual_like;
-    
-    IF NOT v_mutual_like THEN
-        RETURN 'No hay like mutuo, match no creado.';
-    END IF;
-    
-    -- Verificar si ya existe el match
-    SELECT EXISTS(
-        SELECT 1 FROM user_matches 
-        WHERE user_1 = v_ordered_user1 
-        AND user_2 = v_ordered_user2
-    ) INTO v_match_exists;
-    
-    IF v_match_exists THEN
-        RETURN format('El match entre usuarios %s y %s ya existe.', v_ordered_user1, v_ordered_user2);
-    END IF;
-    
-    -- Crear match
-    INSERT INTO user_matches (user_1, user_2)
-    VALUES (v_ordered_user1, v_ordered_user2)
-    RETURNING match_id INTO v_match_id;
-    
-    RETURN format('¡Match creado! Usuarios %s y %s ahora son match (ID: %s).', v_ordered_user1, v_ordered_user2, v_match_id);
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_auto_match
+AFTER INSERT ON user_likes
+FOR EACH ROW
+EXECUTE FUNCTION trg_create_match_on_mutual_like();
+
+
 
 -- ============================
 -- FUNCIÓN: ELIMINAR MATCH
