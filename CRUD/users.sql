@@ -675,3 +675,29 @@ BEGIN
     ORDER BY m.match_time DESC;
 END;
 $$;
+
+
+CREATE OR REPLACE FUNCTION get_user_age(p_id_user INTEGER)
+RETURNS INTEGER AS
+$$
+DECLARE
+    v_birth_date DATE;
+    v_age INTEGER;
+BEGIN
+    -- Obtener fecha de nacimiento del usuario
+    SELECT birth_date INTO v_birth_date
+    FROM users
+    WHERE id_user = p_id_user;
+
+    -- Si no existe el usuario
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'El usuario con ID % no existe.', p_id_user;
+    END IF;
+
+    -- Calcular edad exacta
+    SELECT EXTRACT(YEAR FROM age(CURRENT_DATE, v_birth_date))::INTEGER
+    INTO v_age;
+
+    RETURN v_age;
+END;
+$$ LANGUAGE plpgsql STABLE;
