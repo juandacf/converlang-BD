@@ -8,6 +8,7 @@ RETURNS TABLE (
     target_lang_id_out VARCHAR,
     description TEXT,
     profile_photo VARCHAR,
+    country_id VARCHAR,     -- 👈 DEVUELTO NUEVAMENTE
     age INTEGER
 )
 AS $$
@@ -31,6 +32,7 @@ BEGIN
         u2.target_lang_id AS target_lang_id_out,
         u2.description,
         u2.profile_photo,
+        u2.country_id,   -- 👈 AQUÍ TAMBIÉN
         EXTRACT(YEAR FROM age(CURRENT_DATE, u2.birth_date))::INTEGER AS age
     FROM users u2
     WHERE 
@@ -54,3 +56,4 @@ BEGIN
     ORDER BY u2.last_login DESC;
 END;
 $$ LANGUAGE plpgsql;
+
