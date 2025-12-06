@@ -12,19 +12,14 @@ RETURNS TABLE (
 )
 AS $$
 DECLARE
-    v_limit INTEGER;
     v_user_native VARCHAR(2);
     v_user_target VARCHAR(2);
 BEGIN
-    -- Obtener datos del usuario base
-    SELECT match_quantity, native_lang_id, target_lang_id
-    INTO v_limit, v_user_native, v_user_target
-    FROM users
-    WHERE users.id_user = p_id_user;
-
-    IF v_limit = 0 THEN
-        v_limit := 50;
-    END IF;
+    -- Obtener los idiomas del usuario base
+    SELECT u.native_lang_id, u.target_lang_id
+    INTO v_user_native, v_user_target
+    FROM users u
+    WHERE u.id_user = p_id_user;   
 
     RETURN QUERY
     SELECT 
@@ -36,7 +31,7 @@ BEGIN
         u2.target_lang_id AS target_lang_id_out,
         u2.description,
         u2.profile_photo,
-        EXTRACT(YEAR FROM age(CURRENT_DATE, u2.birth_date)) AS age
+        EXTRACT(YEAR FROM age(CURRENT_DATE, u2.birth_date))::INTEGER AS age
     FROM users u2
     WHERE 
         u2.native_lang_id = v_user_target
@@ -56,7 +51,6 @@ BEGIN
             WHERE (m.user_1 = p_id_user AND m.user_2 = u2.id_user)
                OR (m.user_2 = p_id_user AND m.user_1 = u2.id_user)
         )
-    ORDER BY u2.last_login DESC
-    LIMIT v_limit;
+    ORDER BY u2.last_login DESC;
 END;
 $$ LANGUAGE plpgsql;
