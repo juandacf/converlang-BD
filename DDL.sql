@@ -406,24 +406,33 @@ INSERT INTO user_roles (role_code, role_name, description) VALUES
 -- 6. USERS
 -- ================================================================
 INSERT INTO users (
-    id_user, first_name, last_name, email, password_hash, gender_id, birth_date,
-    country_id, profile_photo, native_lang_id, target_lang_id,
+    id_user, first_name, last_name, email, password_hash,
+    gender_id, birth_date, country_id, profile_photo,
+    native_lang_id, target_lang_id, match_quantity,
     bank_id, role_code, description, is_active, email_verified
 ) VALUES
-(1, 'Carlos', 'Ramírez', 'carlosr@gmail.com', 'hash123', 1, '1995-03-12',
- 'CO', 'profiles/carlos.jpg', 'ES', 'EN', 'BANCOLOMBIA', 'user', 'Amante de los idiomas y la cultura.', TRUE, TRUE),
+(2001, 'John', 'Miller', 'john.miller@example.com', 'hash123', 1, '1995-03-12', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Learner', TRUE, TRUE),
+(2002, 'Emily', 'Johnson', 'emily.j@example.com', 'hash123', 2, '1998-07-25', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Excited to learn', TRUE, TRUE),
+(2003, 'Michael', 'Brown', 'michael.b@example.com', 'hash123', 1, '1992-10-02', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Ready to practice', TRUE, TRUE),
+(2004, 'Sarah', 'Davis', 'sarah.d@example.com', 'hash123', 2, '1999-01-17', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Let’s practice Spanish!', TRUE, TRUE),
+(2005, 'David', 'Smith', 'david.s@example.com', 'hash123', 1, '1990-09-11', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Spanish learner', TRUE, TRUE),
+(2006, 'Jessica', 'White', 'jessica.w@example.com', 'hash123', 2, '1996-04-06', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Here to learn', TRUE, TRUE),
+(2007, 'Kevin', 'Taylor', 'kevin.t@example.com', 'hash123', 1, '1989-08-19', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Love languages', TRUE, TRUE),
+(2008, 'Laura', 'Anderson', 'laura.a@example.com', 'hash123', 2, '1997-05-09', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Here for exchange', TRUE, TRUE),
+(2009, 'Brian', 'Clark', 'brian.c@example.com', 'hash123', 1, '1993-02-21', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Happy to connect', TRUE, TRUE),
+(2010, 'Rachel', 'Walker', 'rachel.w@example.com', 'hash123', 2, '1995-11-14', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Practicing daily', TRUE, TRUE),
 
-(2, 'María', 'López', 'marial@gmail.com', 'hash234', 2, '1998-07-20',
- 'ES', 'profiles/maria.jpg', 'ES', 'EN', 'BBVAES', 'teacher', 'Profesora certificada en inglés con 3 años de experiencia.', TRUE, TRUE),
+(2011, 'Anthony', 'Hall', 'anthony.h@example.com', 'hash123', 1, '1994-07-30', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Portafolio', TRUE, TRUE),
+(2012, 'Olivia', 'Moore', 'olivia.m@example.com', 'hash123', 2, '1999-03-22', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Improving my Spanish', TRUE, TRUE),
+(2013, 'Ethan', 'Lopez', 'ethan.l@example.com', 'hash123', 1, '1991-12-01', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Traveler learning', TRUE, TRUE),
+(2014, 'Sophia', 'Hill', 'sophia.h@example.com', 'hash123', 2, '1997-09-04', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Looking for partners', TRUE, TRUE),
+(2015, 'Daniel', 'Green', 'daniel.g@example.com', 'hash123', 1, '1990-06-18', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Exchange session?', TRUE, TRUE),
+(2016, 'Chloe', 'Adams', 'chloe.a@example.com', 'hash123', 2, '1996-10-26', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Learning Latin Spanish', TRUE, TRUE),
+(2017, 'Jason', 'Baker', 'jason.b@example.com', 'hash123', 1, '1993-08-07', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Practice with me', TRUE, TRUE),
+(2018, 'Grace', 'Carter', 'grace.c@example.com', 'hash123', 2, '1998-04-15', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Hola amigos!', TRUE, TRUE),
+(2019, 'Aaron', 'Turner', 'aaron.t@example.com', 'hash123', 1, '1992-02-10', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Beginner in Spanish', TRUE, TRUE),
+(2020, 'Megan', 'Perry', 'megan.p@example.com', 'hash123', 2, '1997-01-28', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Let’s talk!', TRUE, TRUE);
 
-(3, 'John', 'Smith', 'johnsmith@gmail.com', 'hash345', 1, '1990-02-10',
- 'US', 'profiles/john.jpg', 'EN', 'ES', 'BOFAUS', 'user', 'Interesado en aprender español y conocer amigos.', TRUE, TRUE),
-
-(4, 'Ana', 'Pereira', 'anap@outlook.com', 'hash456', 2, '1993-11-30',
- 'BR', 'profiles/ana.jpg', 'PT', 'ES', 'ITAU', 'teacher', 'Profesora de portugués y amante del intercambio cultural.', TRUE, TRUE),
-
-(5, 'Luc', 'Dubois', 'lucd@protonmail.com', 'hash567', 1, '1988-06-15',
- 'FR', 'profiles/luc.jpg', 'FR', 'EN', 'BNPFR', 'admin', 'Administrador general de la plataforma.', TRUE, TRUE);
 
 INSERT INTO teacher_profiles (
     user_id, teaching_language_id, lang_certification, academic_title,
