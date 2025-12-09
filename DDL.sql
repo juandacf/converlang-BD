@@ -235,7 +235,7 @@ CREATE TABLE chat_logs (
     match_id            INTEGER NOT NULL,
     sender_id           INTEGER NOT NULL,
     message             TEXT NOT NULL,
-    timestamp           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    timestamp           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                                    
     is_corrected        BOOLEAN DEFAULT FALSE,
     is_read             BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_match_id  FOREIGN KEY (match_id)  REFERENCES user_matches(match_id),
@@ -439,62 +439,59 @@ INSERT INTO teacher_profiles (
     experience_certification, hourly_rate, specialization, years_experience,
     availability_notes, is_verified, verified_at, verified_by
 ) VALUES
-(2, 'EN', 'DELE C1', 'Licenciatura en Filología Inglesa', '3 años de experiencia', 25.00,
- 'Inglés conversacional y de negocios', 3, 'Disponible entre semana por la tarde', TRUE, CURRENT_TIMESTAMP, 5),
-
-(4, 'PT', 'CELPE-Bras', 'Maestría en Educación', '5 años enseñando portugués', 20.00,
- 'Portugués para extranjeros', 5, 'Solo fines de semana', TRUE, CURRENT_TIMESTAMP, 5);
-
+(2002, 'EN', 'DELE C1', 'Licenciatura en Filología Inglesa', '3 años de experiencia', 25.00,
+ 'Inglés conversacional y de negocios', 3, 'Disponible entre semana por la tarde', TRUE, CURRENT_TIMESTAMP, 2005),
+(2004, 'PT', 'CELPE-Bras', 'Maestría en Educación', '5 años enseñando portugués', 20.00,
+ 'Portugués para extranjeros', 5, 'Solo fines de semana', TRUE, CURRENT_TIMESTAMP, 2006);
 
 INSERT INTO sessions (
     session_id, id_user1, id_user2, session_type, start_time, end_time, session_status, language_used, created_by
 ) VALUES
-('SES_001', 1, 3, 'exchange', '2025-10-10 14:00', '2025-10-10 15:00', 'completed', 'EN', 1),
-('SES_002', 2, 1, 'teaching', '2025-10-11 09:00', '2025-10-11 10:00', 'completed', 'EN', 2),
-('SES_003', 3, 4, 'exchange', '2025-10-12 16:00', '2025-10-12 17:00', 'scheduled', 'ES', 3);
+('SES_001', 2001, 2003, 'exchange', '2025-10-10 14:00', '2025-10-10 15:00', 'completed', 'EN', 2001),
+('SES_002', 2002, 2001, 'teaching', '2025-10-11 09:00', '2025-10-11 10:00', 'completed', 'EN', 2002),
+('SES_003', 2003, 2004, 'exchange', '2025-10-12 16:00', '2025-10-12 17:00', 'scheduled', 'ES', 2003);
 
 
 INSERT INTO user_likes (id_user_giver, id_user_receiver) VALUES
-(1, 3),
-(3, 1),
-(1, 2),
-(3, 4);
+(2001, 2003),
+(2003, 2001),
+(2001, 2002),
 
+(2003, 2004);
 -- Como 1 y 3 se dieron like mutuo:
 INSERT INTO user_matches (user_1, user_2) VALUES
-(1, 3);
+(2001, 2003);
 
 INSERT INTO chat_logs (match_id, sender_id, message) VALUES
-( 1, 1, 'Hola John! Cómo estás?'),
-( 1, 3, 'Hi Carlos! I’m great, thanks!');
-
+( 1, 2001, 'Hola John! Cómo estás?'),
+( 1, 2003, 'Hi Carlos! I’m great, thanks!');
 
 INSERT INTO titles (title_code, title_name, title_description) VALUES
 ('lang_master', 'Language Master', 'Completó más de 100 sesiones'),
 ('early_bird', 'Early Bird', 'Asiste a clases antes de las 8 am');
 
 INSERT INTO user_titles (id_user, title_code) VALUES
-(1, 'early_bird'),
-(2, 'lang_master');
+(2001, 'early_bird'),
+(2002, 'lang_master');
 
 INSERT INTO user_progress (user_id, language_id, total_sessions, total_hours, notes) VALUES
-(1, 'EN', 5, 7.5, 'Mejorando pronunciación'),
-(3, 'ES', 3, 4.0, 'Aún con dificultad en tiempos verbales');
+(2001, 'EN', 5, 7.5, 'Mejorando pronunciación'),
+(2003, 'ES', 3, 4.0, 'Aún con dificultad en tiempos verbales');
 
 
 INSERT INTO notifications (notification_id, user_id, title, message, notification_type, related_entity_type, related_entity_id)
 VALUES
-('NOT_001', 1, 'Nuevo match encontrado', '¡Has hecho match con John!', 'match', 'user_match', '1_3'),
-('NOT_002', 2, 'Sesión completada', 'Tu sesión con Carlos ha sido completada exitosamente.', 'session', 'teaching_session', 'SES_002');
+('NOT_001', 2001, 'Nuevo match encontrado', '¡Has hecho match con John!', 'match', 'user_match', '2001_2003'),
+('NOT_002', 2002, 'Sesión completada', 'Tu sesión con Carlos ha sido completada exitosamente.', 'session', 'teaching_session', 'SES_002');
 
 INSERT INTO user_preferences (user_id, theme, notifications_email, language_interface)
 VALUES
-(1, 'dark', TRUE, 'ES'),
-(3, 'light', TRUE, 'EN'),
-(5, 'dark', FALSE, 'FR');
+(2001, 'dark', TRUE, 'ES'),
+(2003, 'light', TRUE, 'EN'),
+(2005, 'dark', FALSE, 'FR');
 
 
 INSERT INTO audit_logs (audit_id, table_name, record_id, action, old_values, new_values, changed_by, ip_address)
 VALUES
-('AUD_001', 'users', '1', 'UPDATE', '{"is_active": true}', '{"is_active": false}', 5, '192.168.1.5'),
-('AUD_002', 'sessions', 'SES_001', 'INSERT', NULL, '{"session_status": "completed"}', 1, '192.168.1.2');
+('AUD_001', 'users', '2001', 'UPDATE', '{"is_active": true}', '{"is_active": false}', 2005, '192.168.1.5'),
+('AUD_002', 'sessions', 'SES_001', 'INSERT', NULL, '{"session_status": "completed"}', 2001, '192.168.1.2');
