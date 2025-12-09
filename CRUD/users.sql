@@ -311,7 +311,7 @@ BEGIN
         gender_id = p_gender_id,
         birth_date = p_birth_date,
         country_id = v_country_id_upper,
-        profile_photo = p_profile_photo,
+        profile_photo = COALESCE(NULLIF(p_profile_photo, ''), profile_photo),
         native_lang_id = v_native_lang_upper,
         target_lang_id = v_target_lang_upper,
         match_quantity = p_match_quantity,
@@ -701,3 +701,37 @@ BEGIN
     RETURN v_age;
 END;
 $$ LANGUAGE plpgsql STABLE;
+
+
+CREATE OR REPLACE FUNCTION update_user_photo(
+    p_id_user INTEGER,
+    p_photo_path VARCHAR
+)
+RETURNS TEXT AS
+$$
+DECLARE
+    v_exists BOOLEAN;
+BEGIN
+    -- Verificar si el usuario existe
+    SELECT EXISTS(SELECT 1 FROM users WHERE id_user = p_id_user)
+    INTO v_exists;
+
+    IF NOT v_exists THEN
+        RAISE EXCEPTION 'No existe un usuario con el ID %.', p_id_user;
+    END IF;
+
+    -- Validación opcional del tamaño de la URL
+    IF p_photo_path IS NOT NULL AND LENGTH(p_photo_path) > 255 THEN
+        RAISE EXCEPTION 'La ruta de la foto no puede exceder 255 caracteres.';
+    END IF;
+
+    -- Actualizar la foto del usuario
+    UPDATE users
+    SET 
+        profile_photo = p_photo_path,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id_user = p_id_user;
+
+    RETURN format('Foto de usuario %s actualizada correctamente.', p_id_user);
+END;
+$$ LANGUAGE plpgsql;
