@@ -56,6 +56,7 @@ RETURNS TABLE (
     match_id INTEGER,
     other_user_id INTEGER,
     full_name TEXT,
+    profile_photo VARCHAR,
     last_message TEXT,
     last_message_time TIMESTAMP
 )
@@ -69,6 +70,7 @@ BEGIN
             ELSE m.user_1
         END AS other_user_id,
         CONCAT(u.first_name, ' ', u.last_name) AS full_name,
+        u.profile_photo,  
         (
             SELECT cl.message
             FROM chat_logs cl
@@ -94,5 +96,6 @@ BEGIN
     ORDER BY last_message_time DESC NULLS LAST;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
