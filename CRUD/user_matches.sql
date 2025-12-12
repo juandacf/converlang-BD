@@ -196,8 +196,11 @@ DECLARE
     v_ordered_user1 INTEGER;
     v_ordered_user2 INTEGER;
     v_match_id INTEGER;
+    v_deleted_chats INTEGER;
 BEGIN
-    -- Ordenar usuarios
+    -- ============================
+    -- ORDENAR USUARIOS
+    -- ============================
     IF p_user_1 < p_user_2 THEN
         v_ordered_user1 := p_user_1;
         v_ordered_user2 := p_user_2;
@@ -205,23 +208,48 @@ BEGIN
         v_ordered_user1 := p_user_2;
         v_ordered_user2 := p_user_1;
     END IF;
-    
-    -- Obtener match_id
-    SELECT match_id INTO v_match_id
+
+    -- ============================
+    -- OBTENER MATCH
+    -- ============================
+    SELECT match_id
+    INTO v_match_id
     FROM user_matches
     WHERE user_1 = v_ordered_user1
-    AND user_2 = v_ordered_user2;
-    
+      AND user_2 = v_ordered_user2;
+
     IF NOT FOUND THEN
-        RAISE EXCEPTION 'No existe un match entre los usuarios % y %.', v_ordered_user1, v_ordered_user2;
+        RAISE EXCEPTION
+            'No existe un match entre los usuarios % y %.',
+            v_ordered_user1, v_ordered_user2;
     END IF;
-    
-    -- Eliminar
-    DELETE FROM user_matches WHERE match_id = v_match_id;
-    
-    RETURN format('Match eliminado correctamente entre usuarios %s y %s.', v_ordered_user1, v_ordered_user2);
+
+    -- ============================
+    -- ELIMINAR CHATS ASOCIADOS
+    -- ============================
+    DELETE FROM chat_logs
+    WHERE match_id = v_match_id;
+
+    GET DIAGNOSTICS v_deleted_chats = ROW_COUNT;
+
+    -- ============================
+    -- ELIMINAR MATCH
+    -- ============================
+    DELETE FROM user_matches
+    WHERE match_id = v_match_id;
+
+    -- ============================
+    -- RESPUESTA
+    -- ============================
+    RETURN format(
+        'Match eliminado correctamente entre usuarios %s y %s. Chats eliminados: %s.',
+        v_ordered_user1,
+        v_ordered_user2,
+        v_deleted_chats
+    );
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- ============================
 -- FUNCIÓN: OBTENER TODOS LOS MATCHES
