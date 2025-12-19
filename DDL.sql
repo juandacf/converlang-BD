@@ -153,16 +153,12 @@ CREATE TABLE sessions (
     session_id           VARCHAR(50) PRIMARY KEY,  -- Identificador único de la sesión (ejemplo: 'SES_20250728_001').
     id_user1             INTEGER NOT NULL,         -- Identificador del primer usuario participante (clave foránea a users).
     id_user2             INTEGER NOT NULL,         -- Identificador del segundo usuario participante (clave foránea a users).
-    session_type         VARCHAR(20) NOT NULL,     -- Tipo de sesión ('exchange' para intercambio, 'teaching' para enseñanza).
     start_time           TIMESTAMP,                -- Fecha y hora de inicio de la sesión.
     end_time             TIMESTAMP,                -- Fecha y hora de finalización de la sesión.
-    session_status       VARCHAR(20) DEFAULT 'scheduled',  -- Estado de la sesión ('scheduled', 'completed', 'canceled', 'no_show').
+    session_status       VARCHAR(20) DEFAULT 'completed',  -- Estado de la sesión ('scheduled', 'completed', 'canceled', 'no_show').
     session_notes        TEXT,                     -- Notas adicionales sobre la sesión.
-    language_used        VARCHAR(2),               -- Código del idioma utilizado en la sesión (clave foránea a languages).
     created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de creación del registro.
     updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de la última actualización del registro.
-    created_by           INTEGER,                             -- Identificador del usuario que creó la sesión (clave foránea a users).
-    CONSTRAINT fk_language_used FOREIGN KEY (language_used) REFERENCES languages(language_code),
     CONSTRAINT fk_user1        FOREIGN KEY (id_user1)      REFERENCES users(id_user),
     CONSTRAINT fk_user2        FOREIGN KEY (id_user2)      REFERENCES users(id_user)
 );
