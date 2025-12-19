@@ -155,7 +155,6 @@ CREATE TABLE sessions (
     id_user2             INTEGER NOT NULL,         -- Identificador del segundo usuario participante (clave foránea a users).
     start_time           TIMESTAMP,                -- Fecha y hora de inicio de la sesión.
     end_time             TIMESTAMP,                -- Fecha y hora de finalización de la sesión.
-    session_status       VARCHAR(20) DEFAULT 'completed',  -- Estado de la sesión ('scheduled', 'completed', 'canceled', 'no_show').
     session_notes        TEXT,                     -- Notas adicionales sobre la sesión.
     created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de creación del registro.
     updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de la última actualización del registro.
