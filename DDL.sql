@@ -301,19 +301,12 @@ CREATE TABLE notifications (
 -- ================================================================
 CREATE TABLE user_preferences (
     user_id                 INTEGER PRIMARY KEY,            -- Identificador del usuario (clave foránea a users).
-    theme                   VARCHAR(20) DEFAULT 'light',    -- Tema de la interfaz ('light' o 'dark').
-    notifications_email     BOOLEAN DEFAULT true,           -- Prefiere recibir notificaciones por email.
-    notifications_push      BOOLEAN DEFAULT false,          -- Prefiere recibir notificaciones push en la app móvil.
-    notifications_matches   BOOLEAN DEFAULT true,           -- Prefiere recibir notificaciones de nuevos matches.
-    notifications_sessions  BOOLEAN DEFAULT true,           -- Prefiere recibir notificaciones de nuevas sesiones.
-    language_interface      VARCHAR(2) DEFAULT 'ES',        -- Idioma de la interfaz de usuario (clave foránea a languages).
-    session_duration_pref   INTEGER DEFAULT 60,             -- Duración preferida de las sesiones en minutos (30, 60, 90).
-    profile_visibility      VARCHAR(20) DEFAULT 'public',   -- Visibilidad del perfil ('public', 'private', 'friends_only').
-    auto_accept_matches     BOOLEAN DEFAULT false,          -- Prefiere auto-aceptar nuevos matches.
-    show_online_status      BOOLEAN DEFAULT true,           -- Prefiere mostrar su estado en línea a otros usuarios.
+    theme                   BOOLEAN DEFAULT true,            -- True: light // False: Dark 
+    language_code      VARCHAR(2) DEFAULT 'ES',        -- Idioma de la interfaz de usuario (clave foránea a languages).
     created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- Fecha y hora de creación del registro.
     updated_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- Fecha y hora de la última actualización del registro.
-    CONSTRAINT fk_preference_user FOREIGN KEY (user_id) REFERENCES users(id_user)  
+    CONSTRAINT fk_preference_user FOREIGN KEY (user_id) REFERENCES users(id_user),
+    CONSTRAINT fk_preference_language FOREIGN KEY (language_code) REFERENCES languages(language_code)  
 );
 
 -- ================================================================
