@@ -590,3 +590,47 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_user_sessions_last_month(p_user_id INTEGER)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    result JSONB;
+BEGIN
+    WITH sessions_filtered AS (
+        SELECT
+            (CURRENT_DATE - created_at::date) AS days_ago
+        FROM sessions
+        WHERE
+            (id_user1 = p_user_id OR id_user2 = p_user_id)
+            AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    ),
+    buckets AS (
+        SELECT 'Day 0'  AS name, COUNT(*) FILTER (WHERE days_ago = 0)               AS sesiones FROM sessions_filtered
+        UNION ALL
+        SELECT 'Day 10' AS name, COUNT(*) FILTER (WHERE days_ago BETWEEN 1 AND 10)  AS sesiones FROM sessions_filtered
+        UNION ALL
+        SELECT 'Day 20' AS name, COUNT(*) FILTER (WHERE days_ago BETWEEN 11 AND 20) AS sesiones FROM sessions_filtered
+        UNION ALL
+        SELECT 'Day 30' AS name, COUNT(*) FILTER (WHERE days_ago BETWEEN 21 AND 30) AS sesiones FROM sessions_filtered
+    )
+    SELECT jsonb_agg(
+        jsonb_build_object(
+            'name', name,
+            'sesiones', sesiones
+        )
+        ORDER BY
+            CASE name
+                WHEN 'Day 0' THEN 0
+                WHEN 'Day 10' THEN 1
+                WHEN 'Day 20' THEN 2
+                WHEN 'Day 30' THEN 3
+            END
+    )
+    INTO result
+    FROM buckets;
+
+    RETURN result;
+END;
+$$;
