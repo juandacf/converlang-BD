@@ -386,7 +386,6 @@ INSERT INTO languages (language_code, language_name) VALUES
 -- ================================================================
 INSERT INTO user_roles (role_code, role_name, description) VALUES
 ('admin', 'Administrador', 'Gestiona usuarios, contenido y sesiones'),
-('teacher', 'Profesor', 'Enseña idiomas mediante clases pagadas'),
 ('user', 'Usuario', 'Participa en intercambios y sesiones gratuitas');
 
 
