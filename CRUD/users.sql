@@ -1,6 +1,7 @@
 -- ======================================
 -- FUNCIÓN: Insertar nuevo usuario
 -- ======================================
+
 CREATE OR REPLACE FUNCTION fun_insert_usuarios(
     wfirst_name users.first_name%TYPE,
     wlast_name users.last_name%TYPE,
@@ -15,7 +16,7 @@ CREATE OR REPLACE FUNCTION fun_insert_usuarios(
     wmatch_quantity users.match_quantity%TYPE,
     wbank_id users.bank_id%TYPE,
     wdescription users.description%TYPE,
-    wrole_code users.role_code%TYPE       -- 🔹 nuevo parámetro agregado
+    wrole_code users.role_code%TYPE
 )
 RETURNS SETOF users AS $$
 DECLARE
@@ -85,16 +86,16 @@ BEGIN
         RAISE EXCEPTION 'Error: El rol "%" no es válido', wrole_code;
     END IF;
 
-    -- Inserción del usuario
+    -- Inserción del usuario CON is_active = TRUE 
     INSERT INTO users (
         first_name, last_name, email, password_hash, gender_id,
         birth_date, country_id, profile_photo, native_lang_id,
-        target_lang_id, match_quantity, bank_id, description, role_code
+        target_lang_id, match_quantity, bank_id, description, role_code, is_active
     )
     VALUES (
         wfirst_name, wlast_name, wemail, wpassword_hash, wgender_id,
         wbirth_date, wcountry_id, wprofile_photo, wnative_lang_id,
-        wtarget_lang_id, wmatch_quantity, wbank_id, wdescription, wrole_code
+        wtarget_lang_id, wmatch_quantity, wbank_id, wdescription, wrole_code, TRUE
     )
     RETURNING * INTO wnew_user;
 
@@ -609,10 +610,7 @@ $$ LANGUAGE plpgsql;
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 CREATE OR REPLACE FUNCTION fun_find_user_by_email(p_email VARCHAR)
-
-
 RETURNS TABLE (
     id_user INTEGER,
     first_name VARCHAR,
@@ -620,7 +618,8 @@ RETURNS TABLE (
     email VARCHAR,
     password_hash VARCHAR,
     role_code VARCHAR,
-    role_name VARCHAR
+    role_name VARCHAR,
+    is_active BOOLEAN
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -631,7 +630,8 @@ BEGIN
         u.email,
         u.password_hash,
         u.role_code,
-        r.role_name
+        r.role_name,
+        u.is_active
     FROM users u
     LEFT JOIN user_roles r ON r.role_code = u.role_code
     WHERE u.email = p_email;
@@ -733,5 +733,35 @@ BEGIN
     WHERE id_user = p_id_user;
 
     RETURN format('Foto de usuario %s actualizada correctamente.', p_id_user);
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================
+-- FUNCIÓN: ACTUALIZAR CONTRASEA
+-- ============================
+CREATE OR REPLACE FUNCTION update_user_password(
+    p_id_user INTEGER,
+    p_password_hash VARCHAR
+)
+RETURNS TEXT AS
+$$
+DECLARE
+    v_exists BOOLEAN;
+BEGIN
+    -- Verificar si el usuario existe
+    SELECT EXISTS(SELECT 1 FROM users WHERE id_user = p_id_user) INTO v_exists;
+    
+    IF NOT v_exists THEN
+        RAISE EXCEPTION 'No existe un usuario con el ID %.', p_id_user;
+    END IF;
+    
+    -- Actualizar contraseña
+    UPDATE users
+    SET 
+        password_hash = p_password_hash,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id_user = p_id_user;
+    
+    RETURN format('Contraseña actualizada correctamente para el usuario ID %s.', p_id_user);
 END;
 $$ LANGUAGE plpgsql;

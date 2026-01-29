@@ -401,7 +401,7 @@ BEGIN
         v_status_lower := LOWER(p_status_filter);
         RETURN QUERY
         SELECT
-            s.session_id, s.id_user1, s.id_user2, s.session_type,
+            s.session_id, s.id_user1, s.id_user2,
             s.start_time, s.end_time, s.session_status, s.session_notes,
             s.language_used, s.created_at, s.updated_at, s.created_by
         FROM sessions s
@@ -410,7 +410,7 @@ BEGIN
     ELSE
         RETURN QUERY
         SELECT
-            s.session_id, s.id_user1, s.id_user2, s.session_type,
+            s.session_id, s.id_user1, s.id_user2,
             s.start_time, s.end_time, s.session_status, s.session_notes,
             s.language_used, s.created_at, s.updated_at, s.created_by
         FROM sessions s
@@ -444,7 +444,7 @@ $$
 BEGIN
     RETURN QUERY
     SELECT
-        s.session_id, s.id_user1, s.id_user2, s.session_type,
+        s.session_id, s.id_user1, s.id_user2,
         s.start_time, s.end_time, s.session_status, s.session_notes,
         s.language_used, s.created_at, s.updated_at, s.created_by
     FROM sessions s
@@ -482,7 +482,7 @@ BEGIN
         v_status_lower := LOWER(p_status_filter);
         RETURN QUERY
         SELECT
-            s.session_id, s.id_user1, s.id_user2, s.session_type,
+            s.session_id, s.id_user1, s.id_user2,
             s.start_time, s.end_time, s.session_status, s.session_notes,
             s.language_used, s.created_at, s.updated_at, s.created_by
         FROM sessions s
@@ -492,7 +492,7 @@ BEGIN
     ELSE
         RETURN QUERY
         SELECT
-            s.session_id, s.id_user1, s.id_user2, s.session_type,
+            s.session_id, s.id_user1, s.id_user2,
             s.start_time, s.end_time, s.session_status, s.session_notes,
             s.language_used, s.created_at, s.updated_at, s.created_by
         FROM sessions s
@@ -527,7 +527,7 @@ $$
 BEGIN
     RETURN QUERY
     SELECT
-        s.session_id, s.id_user1, s.id_user2, s.session_type,
+        s.session_id, s.id_user1, s.id_user2,
         s.start_time, s.end_time, s.session_status, s.session_notes,
         s.language_used, s.created_at, s.updated_at, s.created_by
     FROM sessions s
@@ -571,7 +571,7 @@ BEGIN
         v_status_lower := LOWER(p_status_filter);
         RETURN QUERY
         SELECT
-            s.session_id, s.id_user1, s.id_user2, s.session_type,
+            s.session_id, s.id_user1, s.id_user2,
             s.start_time, s.end_time, s.session_status, s.session_notes,
             s.language_used, s.created_at, s.updated_at, s.created_by
         FROM sessions s
@@ -581,7 +581,7 @@ BEGIN
     ELSE
         RETURN QUERY
         SELECT
-            s.session_id, s.id_user1, s.id_user2, s.session_type,
+            s.session_id, s.id_user1, s.id_user2,
             s.start_time, s.end_time, s.session_status, s.session_notes,
             s.language_used, s.created_at, s.updated_at, s.created_by
         FROM sessions s
