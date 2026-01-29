@@ -68,10 +68,6 @@ BEGIN
         RAISE EXCEPTION 'La fecha de inicio y fin son obligatorias.';
     END IF;
 
-    IF p_end_time <= p_start_time THEN
-        RAISE EXCEPTION 'La fecha de finalización debe ser posterior a la fecha de inicio.';
-    END IF;
-
     IF p_end_time - p_start_time > INTERVAL '8 hours' THEN
         RAISE EXCEPTION 'La duración de la sesión no puede exceder 8 horas.';
     END IF;
