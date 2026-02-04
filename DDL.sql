@@ -40,18 +40,6 @@ CREATE TABLE countries (
     updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Fecha y hora de la última actualización del registro.
 );
 
--- ================================================================
--- TABLA: banks
--- Bancos registrados en el sistema, vinculados a países para posibles integraciones futuras.
--- ================================================================
-CREATE TABLE banks (
-    bank_code           VARCHAR(20) PRIMARY KEY,            -- Código único del banco (ejemplo: 'BOFAUS' para Bank of America).
-    bank_name           VARCHAR(100) UNIQUE NOT NULL,       -- Nombre del banco.
-    country_id          VARCHAR(5) NOT NULL,                -- Código del país donde opera el banco (clave foránea a countries).
-    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de creación del registro.
-    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- Fecha y hora de la última actualización del registro.
-    CONSTRAINT fk_country FOREIGN KEY (country_id) REFERENCES countries(country_code)
-);
 
 -- ================================================================
 -- TABLA: languages
@@ -103,7 +91,6 @@ CREATE TABLE users (
     native_lang_id      VARCHAR(2) NOT NULL,                 -- Código del idioma nativo del usuario (clave foránea a languages).
     target_lang_id      VARCHAR(2) NOT NULL,                 -- Código del idioma que el usuario desea aprender (clave foránea a languages).
     match_quantity      INTEGER NOT NULL DEFAULT 10,         -- Cantidad máxima de matches que el usuario desea recibir por día.
-    bank_id             VARCHAR(20),                         -- Código del banco vinculado al usuario (clave foránea a banks).
     role_code           VARCHAR(20),
     description         TEXT NOT NULL DEFAULT 'NO APLICA', -- Descripción o biografía del usuario.
     is_active           BOOLEAN NOT NULL DEFAULT TRUE,     -- Indica si el usuario está activo en la plataforma.
@@ -114,7 +101,6 @@ CREATE TABLE users (
     CONSTRAINT fk_country      FOREIGN KEY (country_id)     REFERENCES countries(country_code), 
     CONSTRAINT fk_native_lang  FOREIGN KEY (native_lang_id) REFERENCES languages(language_code), 
     CONSTRAINT fk_target_lang  FOREIGN KEY (target_lang_id) REFERENCES languages(language_code),
-    CONSTRAINT fk_bank         FOREIGN KEY (bank_id)        REFERENCES banks(bank_code),
     CONSTRAINT fk_role_code     FOREIGN KEY (role_code)     REFERENCES user_roles(role_code), 
     CONSTRAINT fk_gender_id    FOREIGN KEY(gender_id)       REFERENCES  gender_type(gender_id)
 );
@@ -361,15 +347,6 @@ INSERT INTO countries (country_code, country_name, timezone) VALUES
 ('BR', 'Brazil', 'America/Sao_Paulo'),
 ('FR', 'France', 'Europe/Paris');
 
--- ================================================================
--- 2. BANKS
--- ================================================================
-INSERT INTO banks (bank_code, bank_name, country_id) VALUES
-('BANCOLOMBIA', 'Bancolombia S.A.', 'CO'),
-('BBVAES', 'BBVA España', 'ES'),
-('BOFAUS', 'Bank of America', 'US'),
-('ITAU', 'Banco Itaú', 'BR'),
-('BNPFR', 'BNP Paribas', 'FR');
 
 -- ================================================================
 -- 3. LANGUAGES
@@ -396,26 +373,26 @@ INSERT INTO users (
     id_user, first_name, last_name, email, password_hash,
     gender_id, birth_date, country_id, profile_photo,
     native_lang_id, target_lang_id, match_quantity,
-    bank_id, role_code, description, is_active, email_verified
+    role_code, description, is_active, email_verified
 ) VALUES
-(2001, 'John', 'Miller', 'john.miller@example.com', 'hash123', 1, '1995-03-12', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Learner', TRUE, TRUE),
-(2002, 'Emily', 'Johnson', 'emily.j@example.com', 'hash123', 2, '1998-07-25', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Excited to learn', TRUE, TRUE),
-(2003, 'Michael', 'Brown', 'michael.b@example.com', 'hash123', 1, '1992-10-02', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Ready to practice', TRUE, TRUE),
-(2004, 'Sarah', 'Davis', 'sarah.d@example.com', 'hash123', 2, '1999-01-17', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Let’s practice Spanish!', TRUE, TRUE),
-(2005, 'David', 'Smith', 'david.s@example.com', 'hash123', 1, '1990-09-11', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Spanish learner', TRUE, TRUE),
-(2006, 'Jessica', 'White', 'jessica.w@example.com', 'hash123', 2, '1996-04-06', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Here to learn', TRUE, TRUE),
-(2007, 'Kevin', 'Taylor', 'kevin.t@example.com', 'hash123', 1, '1989-08-19', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Love languages', TRUE, TRUE),
-(2008, 'Laura', 'Anderson', 'laura.a@example.com', 'hash123', 2, '1997-05-09', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Here for exchange', TRUE, TRUE),
-(2009, 'Brian', 'Clark', 'brian.c@example.com', 'hash123', 1, '1993-02-21', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Happy to connect', TRUE, TRUE),
-(2010, 'Rachel', 'Walker', 'rachel.w@example.com', 'hash123', 2, '1995-11-14', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Practicing daily', TRUE, TRUE),
+(2001, 'John', 'Miller', 'john.miller@example.com', 'hash123', 1, '1995-03-12', 'US', NULL, 'EN', 'ES', 10, 'user', 'Learner', TRUE, TRUE),
+(2002, 'Emily', 'Johnson', 'emily.j@example.com', 'hash123', 2, '1998-07-25', 'US', NULL, 'EN', 'ES', 10, 'user', 'Excited to learn', TRUE, TRUE),
+(2003, 'Michael', 'Brown', 'michael.b@example.com', 'hash123', 1, '1992-10-02', 'US', NULL, 'EN', 'ES', 10, 'user', 'Ready to practice', TRUE, TRUE),
+(2004, 'Sarah', 'Davis', 'sarah.d@example.com', 'hash123', 2, '1999-01-17', 'US', NULL, 'EN', 'ES', 10, 'user', 'Let’s practice Spanish!', TRUE, TRUE),
+(2005, 'David', 'Smith', 'david.s@example.com', 'hash123', 1, '1990-09-11', 'US', NULL, 'EN', 'ES', 10, 'user', 'Spanish learner', TRUE, TRUE),
+(2006, 'Jessica', 'White', 'jessica.w@example.com', 'hash123', 2, '1996-04-06', 'US', NULL, 'EN', 'ES', 10, 'user', 'Here to learn', TRUE, TRUE),
+(2007, 'Kevin', 'Taylor', 'kevin.t@example.com', 'hash123', 1, '1989-08-19', 'US', NULL, 'EN', 'ES', 10, 'user', 'Love languages', TRUE, TRUE),
+(2008, 'Laura', 'Anderson', 'laura.a@example.com', 'hash123', 2, '1997-05-09', 'US', NULL, 'EN', 'ES', 10, 'user', 'Here for exchange', TRUE, TRUE),
+(2009, 'Brian', 'Clark', 'brian.c@example.com', 'hash123', 1, '1993-02-21', 'US', NULL, 'EN', 'ES', 10, 'user', 'Happy to connect', TRUE, TRUE),
+(2010, 'Rachel', 'Walker', 'rachel.w@example.com', 'hash123', 2, '1995-11-14', 'US', NULL, 'EN', 'ES', 10, 'user', 'Practicing daily', TRUE, TRUE),
 
-(2011, 'Anthony', 'Hall', 'anthony.h@example.com', 'hash123', 1, '1994-07-30', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Portafolio', TRUE, TRUE),
-(2012, 'Olivia', 'Moore', 'olivia.m@example.com', 'hash123', 2, '1999-03-22', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Improving my Spanish', TRUE, TRUE),
-(2013, 'Ethan', 'Lopez', 'ethan.l@example.com', 'hash123', 1, '1991-12-01', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Traveler learning', TRUE, TRUE),
-(2014, 'Sophia', 'Hill', 'sophia.h@example.com', 'hash123', 2, '1997-09-04', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Looking for partners', TRUE, TRUE),
-(2015, 'Daniel', 'Green', 'daniel.g@example.com', 'hash123', 1, '1990-06-18', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Exchange session?', TRUE, TRUE),
-(2016, 'Chloe', 'Adams', 'chloe.a@example.com', 'hash123', 2, '1996-10-26', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Learning Latin Spanish', TRUE, TRUE),
-(2017, 'Jason', 'Baker', 'jason.b@example.com', 'hash123', 1, '1993-08-07', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Practice with me', TRUE, TRUE),
-(2018, 'Grace', 'Carter', 'grace.c@example.com', 'hash123', 2, '1998-04-15', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Hola amigos!', TRUE, TRUE),
-(2019, 'Aaron', 'Turner', 'aaron.t@example.com', 'hash123', 1, '1992-02-10', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Beginner in Spanish', TRUE, TRUE),
-(2020, 'Megan', 'Perry', 'megan.p@example.com', 'hash123', 2, '1997-01-28', 'US', NULL, 'EN', 'ES', 10, 'BOFAUS', 'user', 'Let’s talk!', TRUE, TRUE);
+(2011, 'Anthony', 'Hall', 'anthony.h@example.com', 'hash123', 1, '1994-07-30', 'US', NULL, 'EN', 'ES', 10, 'user', 'Portafolio', TRUE, TRUE),
+(2012, 'Olivia', 'Moore', 'olivia.m@example.com', 'hash123', 2, '1999-03-22', 'US', NULL, 'EN', 'ES', 10, 'user', 'Improving my Spanish', TRUE, TRUE),
+(2013, 'Ethan', 'Lopez', 'ethan.l@example.com', 'hash123', 1, '1991-12-01', 'US', NULL, 'EN', 'ES', 10, 'user', 'Traveler learning', TRUE, TRUE),
+(2014, 'Sophia', 'Hill', 'sophia.h@example.com', 'hash123', 2, '1997-09-04', 'US', NULL, 'EN', 'ES', 10, 'user', 'Looking for partners', TRUE, TRUE),
+(2015, 'Daniel', 'Green', 'daniel.g@example.com', 'hash123', 1, '1990-06-18', 'US', NULL, 'EN', 'ES', 10, 'user', 'Exchange session?', TRUE, TRUE),
+(2016, 'Chloe', 'Adams', 'chloe.a@example.com', 'hash123', 2, '1996-10-26', 'US', NULL, 'EN', 'ES', 10, 'user', 'Learning Latin Spanish', TRUE, TRUE),
+(2017, 'Jason', 'Baker', 'jason.b@example.com', 'hash123', 1, '1993-08-07', 'US', NULL, 'EN', 'ES', 10, 'user', 'Practice with me', TRUE, TRUE),
+(2018, 'Grace', 'Carter', 'grace.c@example.com', 'hash123', 2, '1998-04-15', 'US', NULL, 'EN', 'ES', 10, 'user', 'Hola amigos!', TRUE, TRUE),
+(2019, 'Aaron', 'Turner', 'aaron.t@example.com', 'hash123', 1, '1992-02-10', 'US', NULL, 'EN', 'ES', 10, 'user', 'Beginner in Spanish', TRUE, TRUE),
+(2020, 'Megan', 'Perry', 'megan.p@example.com', 'hash123', 2, '1997-01-28', 'US', NULL, 'EN', 'ES', 10, 'user', 'Let’s talk!', TRUE, TRUE);
