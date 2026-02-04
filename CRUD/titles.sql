@@ -323,7 +323,7 @@ BEGIN
         t.title_name,
         t.title_description,
         COALESCE(
-            (SELECT COUNT(DISTINCT user_id)::INTEGER 
+            (SELECT COUNT(DISTINCT id_user)::INTEGER 
              FROM user_titles ut 
              WHERE ut.title_code = t.title_code),
             0

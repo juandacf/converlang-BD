@@ -14,7 +14,6 @@ CREATE OR REPLACE FUNCTION fun_insert_usuarios(
     wnative_lang_id users.native_lang_id%TYPE,
     wtarget_lang_id users.target_lang_id%TYPE,
     wmatch_quantity users.match_quantity%TYPE,
-    wbank_id users.bank_id%TYPE,
     wdescription users.description%TYPE,
     wrole_code users.role_code%TYPE
 )
@@ -90,12 +89,12 @@ BEGIN
     INSERT INTO users (
         first_name, last_name, email, password_hash, gender_id,
         birth_date, country_id, profile_photo, native_lang_id,
-        target_lang_id, match_quantity, bank_id, description, role_code, is_active
+        target_lang_id, match_quantity, description, role_code, is_active
     )
     VALUES (
         wfirst_name, wlast_name, wemail, wpassword_hash, wgender_id,
         wbirth_date, wcountry_id, wprofile_photo, wnative_lang_id,
-        wtarget_lang_id, wmatch_quantity, wbank_id, wdescription, wrole_code, TRUE
+        wtarget_lang_id, wmatch_quantity, wdescription, wrole_code, TRUE
     )
     RETURNING * INTO wnew_user;
 
@@ -190,12 +189,11 @@ CREATE OR REPLACE FUNCTION update_user(
     p_gender_id INTEGER,
     p_birth_date DATE,
     p_country_id VARCHAR,
-    p_profile_photo VARCHAR ,
+    p_profile_photo VARCHAR,
     p_native_lang_id VARCHAR,
     p_target_lang_id VARCHAR,
     p_match_quantity INTEGER,
-    p_bank_id VARCHAR,
-    p_description TEXT 
+    p_description TEXT
 )
 RETURNS TEXT AS
 $$
@@ -204,7 +202,6 @@ DECLARE
     v_country_id_upper VARCHAR;
     v_native_lang_upper VARCHAR;
     v_target_lang_upper VARCHAR;
-    v_bank_id_upper VARCHAR;
 BEGIN
     -- ============================
     -- VERIFICAR EXISTENCIA DEL USUARIO
@@ -287,16 +284,6 @@ BEGIN
         RAISE EXCEPTION 'La cantidad de matches no puede exceder 100.';
     END IF;
     
-    IF p_bank_id IS NOT NULL AND LENGTH(TRIM(p_bank_id)) > 0 THEN
-        v_bank_id_upper := UPPER(p_bank_id);
-        SELECT EXISTS(SELECT 1 FROM banks WHERE bank_code = v_bank_id_upper) INTO v_exists;
-        IF NOT v_exists THEN
-            RAISE EXCEPTION 'No existe un banco con el código %.', v_bank_id_upper;
-        END IF;
-    ELSE
-        v_bank_id_upper := NULL;
-    END IF;
-    
     IF p_profile_photo IS NOT NULL AND LENGTH(p_profile_photo) > 255 THEN
         RAISE EXCEPTION 'La URL de la foto de perfil no puede exceder 255 caracteres.';
     END IF;
@@ -316,7 +303,6 @@ BEGIN
         native_lang_id = v_native_lang_upper,
         target_lang_id = v_target_lang_upper,
         match_quantity = p_match_quantity,
-        bank_id = v_bank_id_upper,
         description = p_description,
         updated_at = CURRENT_TIMESTAMP
     WHERE id_user = p_id_user;
@@ -405,7 +391,6 @@ RETURNS TABLE (
     native_lang_id VARCHAR,
     target_lang_id VARCHAR,
     match_quantity INTEGER,
-    bank_id VARCHAR,
     role_code VARCHAR,
     description TEXT,
     is_active BOOLEAN,
@@ -423,7 +408,7 @@ BEGIN
             u.id_user, u.first_name, u.last_name, u.email,
             u.gender_id, u.birth_date, u.country_id, u.profile_photo,
             u.native_lang_id, u.target_lang_id, u.match_quantity,
-            u.bank_id, u.role_code, u.description, u.is_active,
+            u.role_code, u.description, u.is_active,
             u.email_verified, u.last_login, u.created_at, u.updated_at
         FROM users u
         ORDER BY u.created_at DESC;
@@ -433,7 +418,7 @@ BEGIN
             u.id_user, u.first_name, u.last_name, u.email,
             u.gender_id, u.birth_date, u.country_id, u.profile_photo,
             u.native_lang_id, u.target_lang_id, u.match_quantity,
-            u.bank_id, u.role_code, u.description, u.is_active,
+            u.role_code, u.description, u.is_active,
             u.email_verified, u.last_login, u.created_at, u.updated_at
         FROM users u
         WHERE u.is_active = TRUE
@@ -460,7 +445,6 @@ RETURNS TABLE (
     native_lang_id VARCHAR,
     target_lang_id VARCHAR,
     match_quantity INTEGER,
-    bank_id VARCHAR,
     role_code VARCHAR,
     description TEXT,
     is_active BOOLEAN,
@@ -477,7 +461,7 @@ BEGIN
         u.id_user, u.first_name, u.last_name, u.email,
         u.gender_id, u.birth_date, u.country_id, u.profile_photo,
         u.native_lang_id, u.target_lang_id, u.match_quantity,
-        u.bank_id, u.role_code, u.description, u.is_active,
+        u.role_code, u.description, u.is_active,
         u.email_verified, u.last_login, u.created_at, u.updated_at
     FROM users u
     WHERE u.id_user = p_id_user;
@@ -503,7 +487,6 @@ RETURNS TABLE (
     native_lang_id VARCHAR,
     target_lang_id VARCHAR,
     match_quantity INTEGER,
-    bank_id VARCHAR,
     role_code VARCHAR,
     description TEXT,
     is_active BOOLEAN,
@@ -520,7 +503,7 @@ BEGIN
         u.id_user, u.first_name, u.last_name, u.email, u.password_hash,
         u.gender_id, u.birth_date, u.country_id, u.profile_photo,
         u.native_lang_id, u.target_lang_id, u.match_quantity,
-        u.bank_id, u.role_code, u.description, u.is_active,
+        u.role_code, u.description, u.is_active,
         u.email_verified, u.last_login, u.created_at, u.updated_at
     FROM users u
     WHERE UPPER(u.email) = UPPER(p_email);

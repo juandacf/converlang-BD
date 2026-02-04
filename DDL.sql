@@ -170,7 +170,7 @@ CREATE TABLE titles (
 -- TABLA: user_titles
 -- ================================================================
 CREATE TABLE user_titles (
-    id_user             SERIAL,              -- Identificador del usuario (clave foránea a users).
+    id_user             INTEGER,             -- Identificador del usuario (clave foránea a users).
     title_code          VARCHAR(50),         -- Código del título obtenido (clave foránea a titles).
     earned_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora en que el usuario obtuvo el título.
     PRIMARY KEY (id_user, title_code),                        -- Clave primaria compuesta para evitar duplicados de títulos para el mismo usuario.
