@@ -99,7 +99,7 @@ CREATE TABLE users (
 -- Almacena las sesiones de intercambio y enseñanza entre usuarios.
 -- ================================================================
 CREATE TABLE sessions (
-    session_id           VARCHAR(50) PRIMARY KEY,  -- Identificador único de la sesión (ejemplo: 'SES_20250728_001').
+    session_id           SERIAL PRIMARY KEY,  -- SERIAL:)
     id_user1             INTEGER NOT NULL,         -- Identificador del primer usuario participante (clave foránea a users).
     id_user2             INTEGER NOT NULL,         -- Identificador del segundo usuario participante (clave foránea a users).
     start_time           TIMESTAMP,                -- Fecha y hora de inicio de la sesión.
@@ -171,7 +171,7 @@ CREATE TABLE titles (
 -- TABLA: user_titles
 -- ================================================================
 CREATE TABLE user_titles (
-    id_user             INTEGER,              -- Identificador del usuario (clave foránea a users).
+    id_user             SERIAL,              -- Identificador del usuario (clave foránea a users).
     title_code          VARCHAR(50),         -- Código del título obtenido (clave foránea a titles).
     earned_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora en que el usuario obtuvo el título.
     PRIMARY KEY (id_user, title_code),                        -- Clave primaria compuesta para evitar duplicados de títulos para el mismo usuario.
@@ -179,21 +179,6 @@ CREATE TABLE user_titles (
     CONSTRAINT fk_title_code    FOREIGN KEY (title_code) REFERENCES titles(title_code)
 );
 
--- ================================================================
--- TABLA: user_progress
--- Almacena el progreso de los usuarios en sus sesiones de aprendizaje.
--- ================================================================
-CREATE TABLE user_progress (
-    user_id              INTEGER,             -- Identificador del usuario (clave foránea a users).
-    language_id          VARCHAR(2),        -- Código del idioma en el que el usuario está progresando (clave foránea a languages).
-    last_updated         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Fecha y hora de la última actualización del progreso.
-    total_sessions       INTEGER DEFAULT 0,        -- Total de sesiones completadas por el usuario en el idioma.
-    total_hours          DECIMAL(6,2) DEFAULT 0,   -- Total de horas acumuladas por el usuario en el idioma.
-    notes                TEXT,                     -- Notas adicionales sobre el progreso del usuario.
-    PRIMARY KEY (user_id, language_id),
-    CONSTRAINT fk_user_progress     FOREIGN KEY (user_id)     REFERENCES users(id_user),
-    CONSTRAINT fk_language_progress FOREIGN KEY (language_id) REFERENCES languages(language_code)
-);
 
 -- ================================================================
 -- TABLA: notifications
