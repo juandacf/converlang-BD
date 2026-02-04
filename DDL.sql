@@ -1,30 +1,18 @@
--- ====================================================================================================================================================================
---------------------------------------------------------------------------------------CONVERLANG DATABASE--
--- ====================================================================================================================================================================
-
--- drops para el reinicio de la base de datos para pruebas
--- Se eliminan en orden inverso a las dependencias para evitar errores de clave foránea
--- Algunas FK se eliminan automáticamente con ON DELETE CASCADE por termas de integridad referencial.
-DROP TABLE IF EXISTS audit_logs;        --tabla de logs de auditoría.
-DROP TABLE IF EXISTS user_preferences;  --tabla de preferencias de usuario.
-DROP TABLE IF EXISTS notifications;     --tabla de notificaciones .
-DROP TABLE IF EXISTS user_progress;     --tabla de progreso de usuario
-DROP TABLE IF EXISTS user_titles;       --tabla de títulos de usuario por logros.
-DROP TABLE IF EXISTS titles;            --tabla de tipos de títulos disponibles.
-DROP TABLE IF EXISTS chat_logs;         --tabla de logs de chat.
-DROP TABLE IF EXISTS teaching_sessions; --tabla de sesiones de enseñanza pagadas y dadas por teachers.
-DROP TABLE IF EXISTS user_matches;      --tabla de matches entre usuarios para empezar un conversación.
-DROP TABLE IF EXISTS user_likes;        --tabla de likes entre usuarios para posibles matches e inicio de sesion.
-DROP TABLE IF EXISTS exchange_sessions; --tabla de sesiones de intercambio de idiomas entre usuarios.     
-DROP TABLE IF EXISTS sessions;          --tabla de sesiones (tanto de intercambio como de enseñanza).
-DROP TABLE IF EXISTS teacher_profiles;  --tabla de perfiles de teachers (deben ser certificados para ingresar).
-DROP TABLE IF EXISTS user_role_assignments; --tabla de asignaciones de roles a usuarios, tres roles.
-DROP TABLE IF EXISTS users;             --tabla principal de usuarios.
-DROP TABLE IF EXISTS gender_type;       --tipo enumerado para el género de los usuarios.
-DROP TABLE IF EXISTS user_roles;        --tabla de roles disponibles en el sistema.
-DROP TABLE IF EXISTS languages;         --tabla de idiomas soportados por la plataforma(serán ingles y español por el momento).
-DROP TABLE IF EXISTS banks;             --tabla de bancos vinculados a países.
-DROP TABLE IF EXISTS countries;         --tabla de países disponibles en la plataforma.
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS chat_logs;
+DROP TABLE IF EXISTS user_preferences;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS user_titles;
+DROP TABLE IF EXISTS user_matches;
+DROP TABLE IF EXISTS user_likes;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS user_progress;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS titles;
+DROP TABLE IF EXISTS gender_type;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS languages;
+DROP TABLE IF EXISTS countries;
 
 
 
@@ -72,8 +60,7 @@ CREATE TABLE gender_type (
  gender_name  VARCHAR(30)
 );
 
---4.1 GENDER
-INSERT INTO gender_type(gender_name) VALUES('Masculino'), ('Femenino'), ('No binario'), ('Prefiero no decirlo');
+
 -- ================================================================
 -- TABLA: users
 -- ================================================================
@@ -108,30 +95,6 @@ CREATE TABLE users (
 
 
 -- ================================================================
--- TABLA: teacher_profiles
--- Perfiles adicionales para usuarios con rol de "teacher".
--- ================================================================
-CREATE TABLE teacher_profiles (
-    user_id              INTEGER PRIMARY KEY,   -- Identificador del usuario (clave foránea a users).
-    teaching_language_id VARCHAR(2) NOT NULL,   -- Código del idioma que el teacher está certificado para enseñar (clave foránea a languages).
-    lang_certification   VARCHAR(255),          -- Certificación de idioma del teacher (ejemplo: 'CELPE-Bras', 'DELE', 'TOEFL').
-    academic_title       VARCHAR(255),          -- Título académico del teacher (ejemplo: 'Licenciatura en Educación', 'Maestría en Lingüística').
-    experience_certification VARCHAR(255),      -- Certificación de experiencia del teacher (ejemplo: '5 años enseñando', 'Certificado TESOL').
-    hourly_rate          DECIMAL(8,2),          -- Tarifa por hora del teacher en USD.
-    specialization       TEXT,                  -- Áreas de especialización del teacher (ejemplo: 'Inglés de negocios', 'Preparación para exámenes').
-    years_experience     INTEGER,               -- Años de experiencia enseñando.
-    availability_notes   TEXT,                  -- Notas sobre la disponibilidad del teacher (ejemplo: 'Disponible fines de semana', 'Solo tardes').
-    is_verified          BOOLEAN DEFAULT FALSE, -- Indica si el perfil del teacher ha sido verificado por un administrador.
-    verified_at          TIMESTAMP,             -- Fecha y hora en que el perfil fue verificado.
-    verified_by          INTEGER,               -- Identificador del usuario que verificó el perfil (clave foránea a users).
-    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de creación del registro.
-    updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de la última actualización del registro.
-    CONSTRAINT fk_user_teacher  FOREIGN KEY (user_id)              REFERENCES users(id_user),
-    CONSTRAINT fk_teaching_lang FOREIGN KEY (teaching_language_id) REFERENCES languages(language_code),
-    CONSTRAINT fk_verified_by   FOREIGN KEY (verified_by)          REFERENCES users(id_user)
-);
-
--- ================================================================
 -- TABLA: sessions
 -- Almacena las sesiones de intercambio y enseñanza entre usuarios.
 -- ================================================================
@@ -148,18 +111,6 @@ CREATE TABLE sessions (
     CONSTRAINT fk_user2        FOREIGN KEY (id_user2)      REFERENCES users(id_user)
 );
 
--- ================================================================
--- TABLA: exchange_sessions
--- Detalles específicos para sesiones de intercambio de idiomas entre usuarios.
--- ================================================================
-CREATE TABLE exchange_sessions (                    
-    session_id           VARCHAR(50) PRIMARY KEY, -- Identificador único de la sesión (clave foránea a sessions).
-    session_rating_user1 INTEGER,                 -- Calificación dada por el primer usuario (1-5).
-    session_rating_user2 INTEGER,                 -- Calificación dada por el segundo usuario (1-5).
-    feedback_user1       TEXT,                    -- Comentarios o feedback del primer usuario.
-    feedback_user2       TEXT,                    -- Comentarios o feedback del segundo usuario.
-    CONSTRAINT fk_session FOREIGN KEY (session_id) REFERENCES sessions(session_id)
-);
 
 -- ================================================================
 -- TABLA: user_likes
@@ -187,24 +138,6 @@ CREATE TABLE user_matches (
     CONSTRAINT fk_user_2 FOREIGN KEY (user_2) REFERENCES users(id_user),
     CONSTRAINT chk_different_users CHECK (user_1 < user_2),
     CONSTRAINT uq_user_pair UNIQUE (user_1, user_2)  -- Evita duplicados entre los mismos usuarios.
-);
--- ================================================================
--- TABLA: teaching_sessions
--- Detalles específicos para sesiones de enseñanza pagadas entre teachers y estudiantes.
--- ================================================================
-CREATE TABLE teaching_sessions (
-    session_id          VARCHAR(50) PRIMARY KEY,    -- Identificador único de la sesión (clave foránea a sessions).
-    teacher_profile_id  INTEGER NOT NULL,           -- Identificador del perfil del teacher (clave foránea a teacher_profiles).
-    student_id          INTEGER NOT NULL,           -- Identificador del estudiante (clave foránea a users).
-    session_cost        DECIMAL(8,2),               -- Costo total de la sesión.
-    teacher_notes       TEXT,                       -- Notas o comentarios del teacher sobre la sesión.
-    student_rating      INTEGER,                    -- Calificación dada por el estudiante al teacher (1-5).   
-    teacher_rating      INTEGER,                    -- Calificación dada por el teacher al estudiante (1-5).
-    homework_assigned   TEXT,                       -- Tareas o ejercicios asignados por el teacher al estudiante.
-    homework_completed  BOOLEAN DEFAULT FALSE,      -- Indica si el estudiante completó la tarea asignada.
-    CONSTRAINT fk_teacher_profile   FOREIGN KEY (teacher_profile_id) REFERENCES teacher_profiles(user_id),
-    CONSTRAINT fk_student           FOREIGN KEY (student_id)          REFERENCES users(id_user),
-    CONSTRAINT fk_session_teacher   FOREIGN KEY (session_id)         REFERENCES sessions(session_id)
 );
 
 -- ================================================================
@@ -332,11 +265,6 @@ CREATE INDEX idx_user_matches_users ON user_matches(user_1, user_2); -- Búsqued
 -- 5. Notificaciones
 CREATE INDEX idx_notifications ON notifications(user_id, is_read, created_at); -- Búsqueda rápida de notificaciones por usuario y estado de lectura.
 
--- 6. Teachers
-CREATE INDEX idx_teacher_profiles_lang_verified ON teacher_profiles(teaching_language_id, is_verified) WHERE is_verified = true; -- Búsqueda rápida de teachers verificados por idioma que enseñan.
-CREATE INDEX idx_teacher_profiles_rate ON teacher_profiles(hourly_rate, is_verified) WHERE is_verified = true;         -- Búsqueda rápida de teachers verificados por tarifa por hora.
-CREATE INDEX idx_teacher_profiles_experience ON teacher_profiles(years_experience, is_verified) WHERE is_verified = true;  -- Búsqueda rápida de teachers verificados por años de experiencia.
-
 -- ================================================================
 -- 1. COUNTRIES
 -- ================================================================
@@ -347,7 +275,8 @@ INSERT INTO countries (country_code, country_name, timezone) VALUES
 ('BR', 'Brazil', 'America/Sao_Paulo'),
 ('FR', 'France', 'Europe/Paris');
 
-
+--2. GENDER
+INSERT INTO gender_type(gender_name) VALUES('Masculino'), ('Femenino'), ('No binario'), ('Prefiero no decirlo');
 -- ================================================================
 -- 3. LANGUAGES
 -- ================================================================
