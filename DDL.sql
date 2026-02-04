@@ -6,7 +6,6 @@ DROP TABLE IF EXISTS user_titles;
 DROP TABLE IF EXISTS user_matches;
 DROP TABLE IF EXISTS user_likes;
 DROP TABLE IF EXISTS sessions;
-DROP TABLE IF EXISTS user_progress;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS titles;
 DROP TABLE IF EXISTS gender_type;
