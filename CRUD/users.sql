@@ -759,7 +759,7 @@ RETURNS TABLE (
     target_lang_id_out VARCHAR,
     description TEXT,
     profile_photo VARCHAR,
-    country_id VARCHAR,     -- 👈 DEVUELTO NUEVAMENTE
+    country_id VARCHAR,   
     age INTEGER
 )
 AS $$
@@ -783,7 +783,7 @@ BEGIN
         u2.target_lang_id AS target_lang_id_out,
         u2.description,
         u2.profile_photo,
-        u2.country_id,   -- 👈 AQUÍ TAMBIÉN
+        u2.country_id,  
         EXTRACT(YEAR FROM age(CURRENT_DATE, u2.birth_date))::INTEGER AS age
     FROM users u2
     WHERE 
@@ -807,4 +807,29 @@ BEGIN
     ORDER BY u2.last_login DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+-- generar reporte de usuario que infringe con las reglas de la comunidad, si este tiene mas de 3 reportes su cuenta será incativada
+CREATE OR REPLACE FUNCTION fun_generate_report(p_id_user INTEGER)
+RETURNS TABLE (
+    o_id_user INTEGER,
+    o_first_name VARCHAR,
+    o_last_name VARCHAR,
+    o_email VARCHAR,
+    o_report_quantity INTEGER,
+    o_is_active BOOLEAN
+) AS $$
+BEGIN
+    -- ESTA ES LA PARTE QUE TE BASTA: Incrementa el contador
+    UPDATE users
+    SET report_quantity = report_quantity + 1
+    WHERE id_user = p_id_user;
+
+    -- Retornamos los datos actualizados
+    RETURN QUERY
+    SELECT u.id_user, u.first_name, u.last_name, u.email, u.report_quantity, u.is_active
+    FROM users u
+    WHERE u.id_user = p_id_user;
+END;
+$$ LANGUAGE plpgsql;
+
 

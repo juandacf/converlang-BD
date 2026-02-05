@@ -80,6 +80,7 @@ CREATE TABLE users (
     role_code           VARCHAR(20),
     description         TEXT NOT NULL DEFAULT 'NO APLICA', -- Descripción o biografía del usuario.
     is_active           BOOLEAN NOT NULL DEFAULT TRUE,     -- Indica si el usuario está activo en la plataforma.
+    report_quantity     INTEGER NOT NULL DEFAULT 0,        -- Cantidad de reportes que le han realizado al usuario.
     email_verified      BOOLEAN NOT NULL DEFAULT FALSE,    -- Indica si el correo electrónico del usuario ha sido verificado.
     last_login          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- Fecha y hora del último inicio de sesión del usuario.
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- Fecha y hora de creación del registro.
@@ -286,26 +287,26 @@ INSERT INTO users (
     id_user, first_name, last_name, email, password_hash,
     gender_id, birth_date, country_id, profile_photo,
     native_lang_id, target_lang_id, match_quantity,
-    role_code, description, is_active, email_verified
+    role_code, description, is_active, report_quantity, email_verified
 ) VALUES
-(2001, 'John', 'Miller', 'john.miller@example.com', 'hash123', 1, '1995-03-12', 'US', NULL, 'EN', 'ES', 10, 'user', 'Learner', TRUE, TRUE),
-(2002, 'Emily', 'Johnson', 'emily.j@example.com', 'hash123', 2, '1998-07-25', 'US', NULL, 'EN', 'ES', 10, 'user', 'Excited to learn', TRUE, TRUE),
-(2003, 'Michael', 'Brown', 'michael.b@example.com', 'hash123', 1, '1992-10-02', 'US', NULL, 'EN', 'ES', 10, 'user', 'Ready to practice', TRUE, TRUE),
-(2004, 'Sarah', 'Davis', 'sarah.d@example.com', 'hash123', 2, '1999-01-17', 'US', NULL, 'EN', 'ES', 10, 'user', 'Let’s practice Spanish!', TRUE, TRUE),
-(2005, 'David', 'Smith', 'david.s@example.com', 'hash123', 1, '1990-09-11', 'US', NULL, 'EN', 'ES', 10, 'user', 'Spanish learner', TRUE, TRUE),
-(2006, 'Jessica', 'White', 'jessica.w@example.com', 'hash123', 2, '1996-04-06', 'US', NULL, 'EN', 'ES', 10, 'user', 'Here to learn', TRUE, TRUE),
-(2007, 'Kevin', 'Taylor', 'kevin.t@example.com', 'hash123', 1, '1989-08-19', 'US', NULL, 'EN', 'ES', 10, 'user', 'Love languages', TRUE, TRUE),
-(2008, 'Laura', 'Anderson', 'laura.a@example.com', 'hash123', 2, '1997-05-09', 'US', NULL, 'EN', 'ES', 10, 'user', 'Here for exchange', TRUE, TRUE),
-(2009, 'Brian', 'Clark', 'brian.c@example.com', 'hash123', 1, '1993-02-21', 'US', NULL, 'EN', 'ES', 10, 'user', 'Happy to connect', TRUE, TRUE),
-(2010, 'Rachel', 'Walker', 'rachel.w@example.com', 'hash123', 2, '1995-11-14', 'US', NULL, 'EN', 'ES', 10, 'user', 'Practicing daily', TRUE, TRUE),
+(2001, 'John', 'Miller', 'john.miller@example.com', 'hash123', 1, '1995-03-12', 'US', NULL, 'EN', 'ES', 10, 'user', 'Learner', TRUE, 0, TRUE),
+(2002, 'Emily', 'Johnson', 'emily.j@example.com', 'hash123', 2, '1998-07-25', 'US', NULL, 'EN', 'ES', 10, 'user', 'Excited to learn', TRUE, 0, TRUE),
+(2003, 'Michael', 'Brown', 'michael.b@example.com', 'hash123', 1, '1992-10-02', 'US', NULL, 'EN', 'ES', 10, 'user', 'Ready to practice', TRUE, 0, TRUE),
+(2004, 'Sarah', 'Davis', 'sarah.d@example.com', 'hash123', 2, '1999-01-17', 'US', NULL, 'EN', 'ES', 10, 'user', 'Let’s practice Spanish!', TRUE, 0, TRUE),
+(2005, 'David', 'Smith', 'david.s@example.com', 'hash123', 1, '1990-09-11', 'US', NULL, 'EN', 'ES', 10, 'user', 'Spanish learner', TRUE, 0, TRUE),
+(2006, 'Jessica', 'White', 'jessica.w@example.com', 'hash123', 2, '1996-04-06', 'US', NULL, 'EN', 'ES', 10, 'user', 'Here to learn', TRUE, 0, TRUE),
+(2007, 'Kevin', 'Taylor', 'kevin.t@example.com', 'hash123', 1, '1989-08-19', 'US', NULL, 'EN', 'ES', 10, 'user', 'Love languages', TRUE, 0, TRUE),
+(2008, 'Laura', 'Anderson', 'laura.a@example.com', 'hash123', 2, '1997-05-09', 'US', NULL, 'EN', 'ES', 10, 'user', 'Here for exchange', TRUE, 0, TRUE),
+(2009, 'Brian', 'Clark', 'brian.c@example.com', 'hash123', 1, '1993-02-21', 'US', NULL, 'EN', 'ES', 10, 'user', 'Happy to connect', TRUE, 0, TRUE),
+(2010, 'Rachel', 'Walker', 'rachel.w@example.com', 'hash123', 2, '1995-11-14', 'US', NULL, 'EN', 'ES', 10, 'user', 'Practicing daily', TRUE, 0, TRUE),
 
-(2011, 'Anthony', 'Hall', 'anthony.h@example.com', 'hash123', 1, '1994-07-30', 'US', NULL, 'EN', 'ES', 10, 'user', 'Portafolio', TRUE, TRUE),
-(2012, 'Olivia', 'Moore', 'olivia.m@example.com', 'hash123', 2, '1999-03-22', 'US', NULL, 'EN', 'ES', 10, 'user', 'Improving my Spanish', TRUE, TRUE),
-(2013, 'Ethan', 'Lopez', 'ethan.l@example.com', 'hash123', 1, '1991-12-01', 'US', NULL, 'EN', 'ES', 10, 'user', 'Traveler learning', TRUE, TRUE),
-(2014, 'Sophia', 'Hill', 'sophia.h@example.com', 'hash123', 2, '1997-09-04', 'US', NULL, 'EN', 'ES', 10, 'user', 'Looking for partners', TRUE, TRUE),
-(2015, 'Daniel', 'Green', 'daniel.g@example.com', 'hash123', 1, '1990-06-18', 'US', NULL, 'EN', 'ES', 10, 'user', 'Exchange session?', TRUE, TRUE),
-(2016, 'Chloe', 'Adams', 'chloe.a@example.com', 'hash123', 2, '1996-10-26', 'US', NULL, 'EN', 'ES', 10, 'user', 'Learning Latin Spanish', TRUE, TRUE),
-(2017, 'Jason', 'Baker', 'jason.b@example.com', 'hash123', 1, '1993-08-07', 'US', NULL, 'EN', 'ES', 10, 'user', 'Practice with me', TRUE, TRUE),
-(2018, 'Grace', 'Carter', 'grace.c@example.com', 'hash123', 2, '1998-04-15', 'US', NULL, 'EN', 'ES', 10, 'user', 'Hola amigos!', TRUE, TRUE),
-(2019, 'Aaron', 'Turner', 'aaron.t@example.com', 'hash123', 1, '1992-02-10', 'US', NULL, 'EN', 'ES', 10, 'user', 'Beginner in Spanish', TRUE, TRUE),
-(2020, 'Megan', 'Perry', 'megan.p@example.com', 'hash123', 2, '1997-01-28', 'US', NULL, 'EN', 'ES', 10, 'user', 'Let’s talk!', TRUE, TRUE);
+(2011, 'Anthony', 'Hall', 'anthony.h@example.com', 'hash123', 1, '1994-07-30', 'US', NULL, 'EN', 'ES', 10, 'user', 'Portafolio', TRUE, 0, TRUE),
+(2012, 'Olivia', 'Moore', 'olivia.m@example.com', 'hash123', 2, '1999-03-22', 'US', NULL, 'EN', 'ES', 10, 'user', 'Improving my Spanish', TRUE, 0, TRUE),
+(2013, 'Ethan', 'Lopez', 'ethan.l@example.com', 'hash123', 1, '1991-12-01', 'US', NULL, 'EN', 'ES', 10, 'user', 'Traveler learning', TRUE, 0, TRUE),
+(2014, 'Sophia', 'Hill', 'sophia.h@example.com', 'hash123', 2, '1997-09-04', 'US', NULL, 'EN', 'ES', 10, 'user', 'Looking for partners', TRUE, 0, TRUE),
+(2015, 'Daniel', 'Green', 'daniel.g@example.com', 'hash123', 1, '1990-06-18', 'US', NULL, 'EN', 'ES', 10, 'user', 'Exchange session?', TRUE, 0, TRUE),
+(2016, 'Chloe', 'Adams', 'chloe.a@example.com', 'hash123', 2, '1996-10-26', 'US', NULL, 'EN', 'ES', 10, 'user', 'Learning Latin Spanish', TRUE, 0, TRUE),
+(2017, 'Jason', 'Baker', 'jason.b@example.com', 'hash123', 1, '1993-08-07', 'US', NULL, 'EN', 'ES', 10, 'user', 'Practice with me', TRUE, 0, TRUE),
+(2018, 'Grace', 'Carter', 'grace.c@example.com', 'hash123', 2, '1998-04-15', 'US', NULL, 'EN', 'ES', 10, 'user', 'Hola amigos!', TRUE, 0, TRUE),
+(2019, 'Aaron', 'Turner', 'aaron.t@example.com', 'hash123', 1, '1992-02-10', 'US', NULL, 'EN', 'ES', 10, 'user', 'Beginner in Spanish', TRUE, 0, TRUE),
+(2020, 'Megan', 'Perry', 'megan.p@example.com', 'hash123', 2, '1997-01-28', 'US', NULL, 'EN', 'ES', 10, 'user', 'Let’s talk!', TRUE, 0, TRUE);
