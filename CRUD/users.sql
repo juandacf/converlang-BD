@@ -819,7 +819,7 @@ RETURNS TABLE (
     o_is_active BOOLEAN
 ) AS $$
 BEGIN
-    -- ESTA ES LA PARTE QUE TE BASTA: Incrementa el contador
+    --Incrementa el contador
     UPDATE users
     SET report_quantity = report_quantity + 1
     WHERE id_user = p_id_user;
