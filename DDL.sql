@@ -185,7 +185,7 @@ CREATE TABLE user_titles (
 -- Almacena las notificaciones enviadas a los usuarios.
 -- ================================================================
 CREATE TABLE notifications (
-    notification_id       VARCHAR(50) PRIMARY KEY,      -- Identificador único de la notificación (ejemplo: 'NOT_20250728_001').
+    notification_id       SERIAL PRIMARY KEY,      -- Identificador único de la notificación (ejemplo: 'NOT_20250728_001').
     user_id               INTEGER NOT NULL,             -- Identificador del usuario que recibe la notificación (clave foránea a users).
     title                 VARCHAR(200) NOT NULL,        -- Título o asunto de la notificación.
     message               TEXT NOT NULL,                -- Contenido o cuerpo de la notificación.
