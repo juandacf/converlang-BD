@@ -186,16 +186,12 @@ CREATE TABLE user_titles (
 -- ================================================================
 CREATE TABLE notifications (
     notification_id       SERIAL PRIMARY KEY,      -- Identificador único de la notificación (ejemplo: 'NOT_20250728_001').
-    user_id               INTEGER NOT NULL,             -- Identificador del usuario que recibe la notificación (clave foránea a users).
+    user_id               INTEGER NOT NULL,           -- Identificador del usuario que recibe la notificación (clave foránea a users).
     title                 VARCHAR(200) NOT NULL,        -- Título o asunto de la notificación.
     message               TEXT NOT NULL,                -- Contenido o cuerpo de la notificación.
     notification_type     VARCHAR(50) NOT NULL,         -- Tipo de notificación (ejemplo: 'match', 'session', 'rating').
-    related_entity_type   VARCHAR(50),                  -- Tipo de entidad relacionada (ejemplo: 'user_match', 'session', 'exchange_session').
-    related_entity_id     VARCHAR(50),                  -- Identificador de la entidad relacionada (ejemplo: '2_3' para un match entre usuarios 2 y 3).
-    is_read               BOOLEAN DEFAULT FALSE,        -- Indica si el usuario ha leído la notificación.
     read_at               TIMESTAMP,                    -- Fecha y hora en que el usuario leyó la notificación.
     created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha y hora de creación de la notificación.
-    expires_at            TIMESTAMP,                        -- Fecha y hora en que la notificación expira y ya no es relevante.
     CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES users(id_user)
 );
 
@@ -245,10 +241,6 @@ CREATE INDEX idx_users_matching ON users(country_id, native_lang_id, target_lang
 -- 3. Likes y matches
 CREATE INDEX idx_user_likes_giver_receiver ON user_likes(id_user_giver, id_user_receiver);  -- Búsqueda rápida de likes entre usuarios.
 CREATE INDEX idx_user_matches_users ON user_matches(user_1, user_2); -- Búsqueda rápida de matches entre usuarios.
-
-
--- 5. Notificaciones
-CREATE INDEX idx_notifications ON notifications(user_id, is_read, created_at); -- Búsqueda rápida de notificaciones por usuario y estado de lectura.
 
 -- ================================================================
 -- 1. COUNTRIES
