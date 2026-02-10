@@ -596,6 +596,27 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+-- ============================
+-- FUNCIÓN: OBTENER TÍTULO MÁS RECIENTE DE UN USUARIO
+-- ============================
+CREATE OR REPLACE FUNCTION get_user_latest_title(p_id_user INTEGER)
+RETURNS TABLE (
+    title_code VARCHAR,
+    title_name VARCHAR,
+    title_description VARCHAR,
+    earned_at TIMESTAMP
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT t.title_code, t.title_name, t.title_description, ut.earned_at
+    FROM user_titles ut
+    INNER JOIN titles t ON ut.title_code = t.title_code
+    WHERE ut.id_user = p_id_user
+    ORDER BY ut.earned_at DESC
+    LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
 /*
   TRIGGER: Asignación automática de títulos por número de sesiones
 
