@@ -273,6 +273,16 @@ INSERT INTO user_roles (role_code, role_name, description) VALUES
 
 
 -- ================================================================
+-- 5. TITLES
+-- ================================================================
+INSERT INTO titles (title_code, title_name, title_description) VALUES
+('beginner', 'Beginner', 'Usuario que está comenzando su camino en el aprendizaje de idiomas'),
+('enthusiast', 'Enthusiast', 'Usuario entusiasta que participa activamente en la plataforma'),
+('intermediate', 'Intermediate', 'Usuario con un nivel intermedio en el intercambio de idiomas'),
+('advanced', 'Advanced', 'Usuario avanzado con amplia experiencia en intercambios'),
+('master', 'Master', 'Usuario maestro que ha dominado el intercambio de idiomas');
+
+-- ================================================================
 -- 6. USERS
 -- ================================================================
 INSERT INTO users (

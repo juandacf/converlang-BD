@@ -594,3 +594,110 @@ BEGIN
     ORDER BY ut.earned_at DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+
+/*
+  TRIGGER: Asignación automática de títulos por número de sesiones
+
+  Propósito:
+    - Después de cada INSERT en la tabla sessions, cuenta las sesiones totales
+      de cada usuario participante (id_user1 e id_user2).
+    - Según el número de sesiones, asigna automáticamente el título correspondiente
+      en la tabla user_titles.
+
+  Umbrales:
+    - 1    sesión   → beginner
+    - 10   sesiones → enthusiast
+    - 50   sesiones → intermediate
+    - 100  sesiones → advanced
+    - 1000 sesiones → master
+
+  Notas:
+    - Usa INSERT ... ON CONFLICT DO NOTHING para evitar duplicados, ya que
+      la PK compuesta (id_user, title_code) de user_titles lo protege.
+    - Evalúa a ambos usuarios de la sesión.
+*/
+
+-- ============================
+-- FUNCIÓN AUXILIAR: Asignar título a un usuario específico
+-- ============================
+CREATE OR REPLACE FUNCTION assign_title_to_user(p_user_id INTEGER)
+RETURNS VOID AS
+$$
+DECLARE
+    v_session_count INTEGER;
+BEGIN
+    -- Contar sesiones totales del usuario (como user1 o user2)
+    SELECT COUNT(*) INTO v_session_count
+    FROM sessions
+    WHERE id_user1 = p_user_id OR id_user2 = p_user_id;
+
+    -- Asignar títulos según umbrales (de mayor a menor para asignar todos los que correspondan)
+
+    -- 1000+ sesiones → master
+    IF v_session_count >= 1000 THEN
+        INSERT INTO user_titles (id_user, title_code)
+        VALUES (p_user_id, 'master')
+        ON CONFLICT (id_user, title_code) DO NOTHING;
+    END IF;
+
+    -- 100+ sesiones → advanced
+    IF v_session_count >= 100 THEN
+        INSERT INTO user_titles (id_user, title_code)
+        VALUES (p_user_id, 'advanced')
+        ON CONFLICT (id_user, title_code) DO NOTHING;
+    END IF;
+
+    -- 50+ sesiones → intermediate
+    IF v_session_count >= 50 THEN
+        INSERT INTO user_titles (id_user, title_code)
+        VALUES (p_user_id, 'intermediate')
+        ON CONFLICT (id_user, title_code) DO NOTHING;
+    END IF;
+
+    -- 10+ sesiones → enthusiast
+    IF v_session_count >= 10 THEN
+        INSERT INTO user_titles (id_user, title_code)
+        VALUES (p_user_id, 'enthusiast')
+        ON CONFLICT (id_user, title_code) DO NOTHING;
+    END IF;
+
+    -- 1+ sesión → beginner
+    IF v_session_count >= 1 THEN
+        INSERT INTO user_titles (id_user, title_code)
+        VALUES (p_user_id, 'beginner')
+        ON CONFLICT (id_user, title_code) DO NOTHING;
+    END IF;
+
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- ============================
+-- TRIGGER FUNCTION: assign_title_by_sessions()
+-- ============================
+CREATE OR REPLACE FUNCTION assign_title_by_sessions()
+RETURNS TRIGGER AS
+$$
+BEGIN
+    -- Evaluar y asignar títulos al usuario 1
+    PERFORM assign_title_to_user(NEW.id_user1);
+
+    -- Evaluar y asignar títulos al usuario 2
+    PERFORM assign_title_to_user(NEW.id_user2);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- ============================
+-- TRIGGER: trg_assign_title_after_session
+-- Se dispara AFTER INSERT en sessions
+-- ============================
+DROP TRIGGER IF EXISTS trg_assign_title_after_session ON sessions;
+
+CREATE TRIGGER trg_assign_title_after_session
+AFTER INSERT ON sessions
+FOR EACH ROW
+EXECUTE FUNCTION assign_title_by_sessions();
