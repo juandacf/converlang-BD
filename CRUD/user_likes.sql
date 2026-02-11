@@ -289,7 +289,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(id_user_giver) INTO v_count
     FROM user_likes
     WHERE id_user_giver = p_user_id;
     
@@ -308,7 +308,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(id_user_receiver) INTO v_count
     FROM user_likes
     WHERE id_user_receiver = p_user_id;
     
@@ -327,7 +327,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(ul1.id_user_giver) INTO v_count
     FROM user_likes ul1
     INNER JOIN user_likes ul2 
         ON ul1.id_user_giver = ul2.id_user_receiver 
@@ -357,24 +357,24 @@ BEGIN
     RETURN QUERY
     SELECT
         p_user_id as user_id,
-        (SELECT COUNT(*)::INTEGER FROM user_likes WHERE id_user_giver = p_user_id) as likes_given,
-        (SELECT COUNT(*)::INTEGER FROM user_likes WHERE id_user_receiver = p_user_id) as likes_received,
-        (SELECT COUNT(*)::INTEGER 
+        (SELECT COUNT(id_user_giver)::INTEGER FROM user_likes WHERE id_user_giver = p_user_id) as likes_given,
+        (SELECT COUNT(id_user_receiver)::INTEGER FROM user_likes WHERE id_user_receiver = p_user_id) as likes_received,
+        (SELECT COUNT(ul1.id_user_giver)::INTEGER 
          FROM user_likes ul1
          INNER JOIN user_likes ul2 
              ON ul1.id_user_giver = ul2.id_user_receiver 
              AND ul1.id_user_receiver = ul2.id_user_giver
          WHERE ul1.id_user_giver = p_user_id) as mutual_matches,
         CASE 
-            WHEN (SELECT COUNT(*) FROM user_likes WHERE id_user_giver = p_user_id) > 0 
+            WHEN (SELECT COUNT(id_user_giver) FROM user_likes WHERE id_user_giver = p_user_id) > 0 
             THEN ROUND(
-                (SELECT COUNT(*)::DECIMAL 
+                (SELECT COUNT(ul1.id_user_giver)::DECIMAL 
                  FROM user_likes ul1
                  INNER JOIN user_likes ul2 
                      ON ul1.id_user_giver = ul2.id_user_receiver 
                      AND ul1.id_user_receiver = ul2.id_user_giver
                  WHERE ul1.id_user_giver = p_user_id) * 100.0 / 
-                (SELECT COUNT(*) FROM user_likes WHERE id_user_giver = p_user_id),
+                (SELECT COUNT(id_user_giver) FROM user_likes WHERE id_user_giver = p_user_id),
                 2
             )
             ELSE 0
@@ -527,11 +527,11 @@ DECLARE
     v_likes_received INTEGER;
 BEGIN
     -- Contar likes antes de eliminar
-    SELECT COUNT(*) INTO v_likes_given
+    SELECT COUNT(id_user_giver) INTO v_likes_given
     FROM user_likes
     WHERE id_user_giver = p_user_id;
     
-    SELECT COUNT(*) INTO v_likes_received
+    SELECT COUNT(id_user_receiver) INTO v_likes_received
     FROM user_likes
     WHERE id_user_receiver = p_user_id;
     

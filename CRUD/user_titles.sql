@@ -230,7 +230,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(title_code) INTO v_count
     FROM user_titles
     WHERE id_user = p_id_user;
     
@@ -335,7 +335,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(title_code) INTO v_count
     FROM user_titles
     WHERE id_user = p_id_user;
     
@@ -367,7 +367,7 @@ BEGIN
     WITH user_title_counts AS (
         SELECT 
             ut.id_user,
-            COUNT(*)::INTEGER as title_count,
+            COUNT(ut.title_code)::INTEGER as title_count,
             MAX(ut.earned_at) as last_earned
         FROM user_titles ut
         GROUP BY ut.id_user
@@ -478,7 +478,7 @@ BEGIN
         t.title_code,
         t.title_name,
         t.title_description,
-        (SELECT COUNT(*)::INTEGER FROM user_titles ut2 WHERE ut2.title_code = t.title_code) as total_users_with_title
+        (SELECT COUNT(ut2.id_user)::INTEGER FROM user_titles ut2 WHERE ut2.title_code = t.title_code) as total_users_with_title
     FROM titles t
     WHERE NOT EXISTS (
         SELECT 1 FROM user_titles ut
@@ -511,7 +511,7 @@ BEGIN
     RETURN QUERY
     SELECT
         p_id_user as user_id,
-        COUNT(*)::INTEGER as total_titles,
+        COUNT(ut.title_code)::INTEGER as total_titles,
         COUNT(CASE WHEN ut.earned_at >= CURRENT_TIMESTAMP - INTERVAL '7 days' THEN 1 END)::INTEGER as titles_last_week,
         COUNT(CASE WHEN ut.earned_at >= CURRENT_TIMESTAMP - INTERVAL '30 days' THEN 1 END)::INTEGER as titles_last_month,
         MIN(ut.earned_at) as first_title_date,
@@ -521,7 +521,7 @@ BEGIN
          WHERE ut2.id_user = p_id_user 
          ORDER BY ut2.earned_at DESC 
          LIMIT 1) as most_recent_title,
-        (SELECT COUNT(*)::INTEGER FROM titles) as titles_available
+        (SELECT COUNT(title_code)::INTEGER FROM titles) as titles_available
     FROM user_titles ut
     WHERE ut.id_user = p_id_user;
 END;
@@ -649,7 +649,7 @@ DECLARE
     v_session_count INTEGER;
 BEGIN
     -- Contar sesiones totales del usuario (como user1 o user2)
-    SELECT COUNT(*) INTO v_session_count
+    SELECT COUNT(session_id) INTO v_session_count
     FROM sessions
     WHERE id_user1 = p_user_id OR id_user2 = p_user_id;
 

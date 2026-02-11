@@ -373,7 +373,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(match_id) INTO v_count
     FROM user_matches
     WHERE user_1 = p_user_id OR user_2 = p_user_id;
     
@@ -518,7 +518,7 @@ BEGIN
     RETURN QUERY
     SELECT
         p_user_id as user_id,
-        COUNT(*)::INTEGER as total_matches,
+        COUNT(match_id)::INTEGER as total_matches,
         COUNT(CASE WHEN um.match_time >= CURRENT_TIMESTAMP - INTERVAL '7 days' THEN 1 END)::INTEGER as matches_last_week,
         COUNT(CASE WHEN um.match_time >= CURRENT_TIMESTAMP - INTERVAL '30 days' THEN 1 END)::INTEGER as matches_last_month,
         COUNT(CASE 
@@ -566,7 +566,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(match_id) INTO v_count
     FROM user_matches
     WHERE user_1 = p_user_id OR user_2 = p_user_id;
     

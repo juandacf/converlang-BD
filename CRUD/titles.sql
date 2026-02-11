@@ -299,7 +299,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count FROM titles;
+    SELECT COUNT(title_code) INTO v_count FROM titles;
     RETURN v_count;
 END;
 $$ LANGUAGE plpgsql;

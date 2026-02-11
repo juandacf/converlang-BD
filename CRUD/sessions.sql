@@ -396,13 +396,13 @@ BEGIN
             AND created_at >= CURRENT_DATE - INTERVAL '30 days'
     ),
     buckets AS (
-        SELECT 'Week 4'  AS name, COUNT(*) FILTER (WHERE days_ago = 0)               AS sesiones FROM sessions_filtered
+        SELECT 'Week 4'  AS name, COUNT(days_ago) FILTER (WHERE days_ago = 0)               AS sesiones FROM sessions_filtered
         UNION ALL
-        SELECT 'Week 3' AS name, COUNT(*) FILTER (WHERE days_ago BETWEEN 1 AND 10)  AS sesiones FROM sessions_filtered
+        SELECT 'Week 3' AS name, COUNT(days_ago) FILTER (WHERE days_ago BETWEEN 1 AND 10)  AS sesiones FROM sessions_filtered
         UNION ALL
-        SELECT 'Week 2' AS name, COUNT(*) FILTER (WHERE days_ago BETWEEN 11 AND 20) AS sesiones FROM sessions_filtered
+        SELECT 'Week 2' AS name, COUNT(days_ago) FILTER (WHERE days_ago BETWEEN 11 AND 20) AS sesiones FROM sessions_filtered
         UNION ALL
-        SELECT 'Week 1' AS name, COUNT(*) FILTER (WHERE days_ago BETWEEN 21 AND 30) AS sesiones FROM sessions_filtered
+        SELECT 'Week 1' AS name, COUNT(days_ago) FILTER (WHERE days_ago BETWEEN 21 AND 30) AS sesiones FROM sessions_filtered
     )
     SELECT jsonb_agg(
         jsonb_build_object(
@@ -476,7 +476,7 @@ $$
 DECLARE
     v_count INTEGER;
 BEGIN
-    SELECT COUNT(*) INTO v_count
+    SELECT COUNT(session_id) INTO v_count
     FROM sessions
     WHERE (id_user1 = p_user_id OR id_user2 = p_user_id);
     
