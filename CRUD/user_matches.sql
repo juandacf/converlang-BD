@@ -139,7 +139,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_auto_match
+CREATE OR REPLACE TRIGGER trg_auto_match
 AFTER INSERT ON user_likes
 FOR EACH ROW
 EXECUTE FUNCTION trg_create_match_on_mutual_like();
