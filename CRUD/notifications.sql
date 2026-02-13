@@ -147,21 +147,3 @@ BEGIN
     RETURN FOUND;
 END;
 $$ LANGUAGE plpgsql;
-
--- ============================
--- FUNCIÓN: ELIMINAR TODAS LAS NOTIFICACIONES LEÍDAS
--- ============================
-CREATE OR REPLACE FUNCTION delete_read_notifications(
-    p_user_id INTEGER
-) RETURNS INTEGER AS $$
-DECLARE
-    v_count INTEGER;
-BEGIN
-    DELETE FROM notifications
-    WHERE user_id = p_user_id
-    AND read_at IS NOT NULL;
-    
-    GET DIAGNOSTICS v_count = ROW_COUNT;
-    RETURN v_count;
-END;
-$$ LANGUAGE plpgsql;
