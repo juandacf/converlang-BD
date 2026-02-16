@@ -11,24 +11,49 @@ CREATE OR REPLACE FUNCTION trigger_notify_like()
 RETURNS TRIGGER AS $$
 DECLARE
     v_sender_name VARCHAR;
+    v_mutual_like BOOLEAN;
 BEGIN
     -- Obtener nombre del usuario que envía el like
     SELECT first_name || ' ' || last_name INTO v_sender_name
     FROM users 
     WHERE id_user = NEW.id_user_giver;
+
+    -- Verificar si existe un like mutuo (Match)
+    SELECT EXISTS (
+        SELECT 1 
+        FROM user_likes 
+        WHERE id_user_giver = NEW.id_user_receiver 
+        AND id_user_receiver = NEW.id_user_giver
+    ) INTO v_mutual_like;
     
     -- Insertar notificación para el usuario que recibe el like
-    INSERT INTO notifications (
-        user_id,
-        title,
-        message,
-        notification_type
-    ) VALUES (
-        NEW.id_user_receiver,
-        'Nueva solicitud de Match',
-        COALESCE(v_sender_name, 'Alguien') || ' quiere hacer match contigo!',
-        'like_request'
-    );
+    IF v_mutual_like THEN
+        -- Si es Match, notificamos el Match
+        INSERT INTO notifications (
+            user_id,
+            title,
+            message,
+            notification_type
+        ) VALUES (
+            NEW.id_user_receiver,
+            '¡Nuevo Match!',
+            '¡Tienes un nuevo match con ' || COALESCE(v_sender_name, 'alguien') || '! Empieza a chatear ahora.',
+            'match'
+        );
+    ELSE
+        -- Si solo es Like, notificamos el Like
+        INSERT INTO notifications (
+            user_id,
+            title,
+            message,
+            notification_type
+        ) VALUES (
+            NEW.id_user_receiver,
+            'Nueva solicitud de Match',
+            COALESCE(v_sender_name, 'Alguien') || ' quiere hacer match contigo!',
+            'like_request'
+        );
+    END IF;
     
     RETURN NEW;
 END;
