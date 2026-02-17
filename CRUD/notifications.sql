@@ -37,7 +37,7 @@ BEGIN
         ) VALUES (
             NEW.id_user_receiver,
             '¡Nuevo Match!',
-            '¡Tienes un nuevo match con ' || COALESCE(v_sender_name, 'alguien') || '! Empieza a chatear ahora.',
+            v_sender_name,
             'match'
         );
     ELSE
@@ -50,7 +50,7 @@ BEGIN
         ) VALUES (
             NEW.id_user_receiver,
             'Nueva solicitud de Match',
-            COALESCE(v_sender_name, 'Alguien') || ' quiere hacer match contigo!',
+            v_sender_name,
             'like_request'
         );
     END IF;
