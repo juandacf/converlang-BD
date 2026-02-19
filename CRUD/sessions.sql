@@ -217,38 +217,29 @@ AS $$
 DECLARE
     result JSONB;
 BEGIN
-    WITH sessions_filtered AS (
+    SELECT jsonb_agg(
+        jsonb_build_object(
+            'name', to_char(day_series, 'DD/MM'),
+            'sesiones', COALESCE(daily_counts.count, 0)
+        )
+        ORDER BY day_series ASC
+    )
+    INTO result
+    FROM generate_series(
+        CURRENT_DATE - INTERVAL '29 days',
+        CURRENT_DATE,
+        '1 day'::interval
+    ) AS day_series
+    LEFT JOIN (
         SELECT
-            (CURRENT_DATE - created_at::date) AS days_ago
+            created_at::date AS session_date,
+            COUNT(*) AS count
         FROM sessions
         WHERE
             (id_user1 = p_user_id OR id_user2 = p_user_id)
             AND created_at >= CURRENT_DATE - INTERVAL '30 days'
-    ),
-    buckets AS (
-        SELECT 'Week 4'  AS name, COUNT(days_ago) FILTER (WHERE days_ago = 0)               AS sesiones FROM sessions_filtered
-        UNION ALL
-        SELECT 'Week 3' AS name, COUNT(days_ago) FILTER (WHERE days_ago BETWEEN 1 AND 10)  AS sesiones FROM sessions_filtered
-        UNION ALL
-        SELECT 'Week 2' AS name, COUNT(days_ago) FILTER (WHERE days_ago BETWEEN 11 AND 20) AS sesiones FROM sessions_filtered
-        UNION ALL
-        SELECT 'Week 1' AS name, COUNT(days_ago) FILTER (WHERE days_ago BETWEEN 21 AND 30) AS sesiones FROM sessions_filtered
-    )
-    SELECT jsonb_agg(
-        jsonb_build_object(
-            'name', name,
-            'sesiones', sesiones
-        )
-        ORDER BY
-            CASE name
-                WHEN 'Week 1' THEN 0
-                WHEN 'Week 2' THEN 1
-                WHEN 'Week 3' THEN 2
-                WHEN 'Week 4' THEN 3
-            END
-    )
-    INTO result
-    FROM buckets;
+        GROUP BY created_at::date
+    ) AS daily_counts ON day_series::date = daily_counts.session_date;
 
     RETURN result;
 END;
