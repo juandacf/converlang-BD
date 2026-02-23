@@ -233,7 +233,7 @@ BEGIN
     LEFT JOIN (
         SELECT
             created_at::date AS session_date,
-            COUNT(*) AS count
+            SUM(1)::BIGINT AS count
         FROM sessions
         WHERE
             (id_user1 = p_user_id OR id_user2 = p_user_id)
