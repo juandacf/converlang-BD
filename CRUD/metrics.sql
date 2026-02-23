@@ -1,6 +1,5 @@
 -- ============================================================
 -- FUNCIONES POSTGRESQL PARA MÉTRICAS DE USUARIO
--- Solo SELECT — sin COUNT(*), sin INSERT/UPDATE/DELETE
 -- Tablas: sessions, user_matches, chat_logs, users, countries
 -- ============================================================
 
