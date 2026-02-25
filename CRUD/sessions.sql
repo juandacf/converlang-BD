@@ -56,24 +56,8 @@ BEGIN
         RAISE EXCEPTION 'La duración de la sesión no puede exceder 8 horas.';
     END IF;
    
-    -- ============================
-    -- VALIDAR CONFLICTOS DE HORARIO
-    -- ============================
-    SELECT EXISTS(
-        SELECT 1 FROM sessions
-        WHERE (id_user1 = p_id_user1 OR id_user2 = p_id_user1 OR id_user1 = p_id_user2 OR id_user2 = p_id_user2)
-        AND (
-            (p_start_time BETWEEN start_time AND end_time)
-            OR
-            (p_end_time BETWEEN start_time AND end_time)
-            OR
-            (start_time BETWEEN p_start_time AND p_end_time)
-        )
-    ) INTO v_exists;
-    
-    IF v_exists THEN
-        RAISE EXCEPTION 'Uno de los usuarios ya tiene otra sesión programada en ese horario.';
-    END IF;
+    -- NOTA: No se validan conflictos de horario porque las sesiones
+    -- se registran como historial después de finalizadas, no se programan.
 
     -- ============================
     -- INSERTAR SESIÓN
