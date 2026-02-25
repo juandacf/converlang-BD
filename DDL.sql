@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS user_titles;
 DROP TABLE IF EXISTS user_matches;
 DROP TABLE IF EXISTS user_likes;
 DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS password_resets;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS titles;
 DROP TABLE IF EXISTS gender_type;
@@ -93,6 +94,19 @@ CREATE TABLE users (
 );
 
 
+
+-- ================================================================
+-- TABLA: password_resets
+-- Almacena los tokens temporales de recuperación de contraseña.
+-- ================================================================
+CREATE TABLE password_resets (
+    reset_id            VARCHAR(50) PRIMARY KEY, 
+    id_user             INTEGER NOT NULL UNIQUE, 
+    reset_token         VARCHAR(255) UNIQUE NOT NULL, 
+    expires_at          TIMESTAMP NOT NULL, 
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_password_reset_user FOREIGN KEY (id_user) REFERENCES users(id_user)
+);
 
 -- ================================================================
 -- TABLA: sessions
@@ -312,3 +326,6 @@ INSERT INTO users (
 (2018, 'Grace', 'Carter', 'grace.c@example.com', 'hash123', 2, '1998-04-15', 'US', NULL, 'EN', 'ES', 10, 'user', 'Hola amigos!', TRUE, 0, TRUE),
 (2019, 'Aaron', 'Turner', 'aaron.t@example.com', 'hash123', 1, '1992-02-10', 'US', NULL, 'EN', 'ES', 10, 'user', 'Beginner in Spanish', TRUE, 0, TRUE),
 (2020, 'Megan', 'Perry', 'megan.p@example.com', 'hash123', 2, '1997-01-28', 'US', NULL, 'EN', 'ES', 10, 'user', 'Let’s talk!', TRUE, 0, TRUE);
+
+
+
